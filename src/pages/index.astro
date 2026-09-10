@@ -1,21 +1,23 @@
 ---
 import Layout from '../layouts/Layout.astro'
+
+// Placeholder da Fase 0. O site institucional é construído na Fase 3.
 ---
 
 <Layout>
   <main class="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-8 px-6 py-16">
     <img
-      src="/Logomarca-casaimobi.png"
-      alt="CasaImobi"
-      width="230"
-      height="99"
-      class="w-[150px]"
+      src="/logo-casaimobi-web.png"
+      alt="CasaImobi — Negócios Imobiliários"
+      width="1000"
+      height="608"
+      class="w-[200px]"
     />
 
     <div class="space-y-3">
-      <p class="text-sm font-medium tracking-widest text-brand-600 uppercase">Início do projeto</p>
-      <h1 class="text-3xl font-bold text-balance">Fundação no ar</h1>
-      <p class="text-brand-800/80">
+      <p class="text-sm font-medium tracking-widest text-gold-700 uppercase">Fase 0</p>
+      <h1 class="text-3xl font-bold text-balance text-brand-900">Fundação no ar</h1>
+      <p class="text-brand-800">
         Astro, Tailwind e o adapter da Cloudflare configurados. A API Hono responde em
         <code class="rounded bg-brand-50 px-1.5 py-0.5 text-brand-700">/api/health</code>
         com o estado dos bindings D1 e R2.
@@ -24,7 +26,7 @@ import Layout from '../layouts/Layout.astro'
 
     <a
       href="/api/health"
-      class="inline-flex w-fit rounded-lg bg-brand-500 px-5 py-2.5 font-medium text-white transition hover:bg-brand-600 focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:outline-none"
+      class="inline-flex w-fit rounded-lg bg-brand-900 px-5 py-2.5 font-medium text-white transition hover:bg-brand-800 focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:outline-none"
     >
       Testar /api/health
     </a>
