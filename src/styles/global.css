@@ -1,15 +1,42 @@
 @import "tailwindcss";
 
+/*
+ * Tokens da marca CasaImobi, medidos em public/logo-casaimobi.png.
+ * No Tailwind v4 as variáveis dentro de @theme viram utilitários sozinhas:
+ * --color-brand-900 gera bg-brand-900, text-brand-900, border-brand-900...
+ */
 @theme {
-  --color-brand-50: #eaf6fc;
-  --color-brand-400: #4fb8e8;
-  --color-brand-500: #28a0d8; /* cor de ação principal */
-  --color-brand-600: #1e7aa8;
-  --color-brand-700: #185078;
-  --color-brand-800: #104060;
-  --color-brand-900: #0a2a4a;
-  --color-brand-950: #061b33;
+  /* Roxo institucional — #32104e é o do logo. Texto e superfícies escuras. */
+  --color-brand-50: #f7f0fc;
+  --color-brand-100: #eddff8;
+  --color-brand-200: #dcc2f2;
+  --color-brand-300: #c79ceb;
+  --color-brand-400: #ae6fe1;
+  --color-brand-500: #923ed8;
+  --color-brand-600: #7927bc;
+  --color-brand-700: #5e1e92;
+  --color-brand-800: #47176f;
+  --color-brand-900: #32104e;  /* logo */
+  --color-brand-950: #200a32;
 
-  --color-surface: #f8f8f8;
+  /*
+   * Dourado — acento.
+   * ATENÇÃO: gold-500 sobre branco dá 2.4:1 e REPROVA para texto.
+   * Em texto sobre fundo claro, use gold-700 ou mais escuro.
+   * Sobre brand-900 o gold-500 dá 6.7:1 e passa em AA.
+   */
+  --color-gold-50: #fefaee;
+  --color-gold-100: #fdf3db;
+  --color-gold-200: #fbe9b9;
+  --color-gold-300: #f9d988;
+  --color-gold-400: #f5c23d;
+  --color-gold-500: #d79e0b;  /* logo */
+  --color-gold-600: #b68609;
+  --color-gold-700: #946d08;
+  --color-gold-800: #725406;
+  --color-gold-900: #553e04;
+  --color-gold-950: #382903;
+
+  --color-surface: #faf8fc;
   --color-whatsapp: #25d366;
 }
