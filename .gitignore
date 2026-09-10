@@ -23,3 +23,8 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Docs - planning and tracking
+docs/
+# Wrangler local state (D1 local SQLite, etc.)
+.wrangler/

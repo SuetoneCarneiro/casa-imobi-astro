@@ -1,11 +1,32 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Layout from '../layouts/Layout.astro'
 ---
 
 <Layout>
-	<Welcome />
+  <main class="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-8 px-6 py-16">
+    <img
+      src="/Logomarca-casaimobi.png"
+      alt="CasaImobi"
+      width="230"
+      height="99"
+      class="w-[150px]"
+    />
+
+    <div class="space-y-3">
+      <p class="text-sm font-medium tracking-widest text-brand-600 uppercase">Início do projeto</p>
+      <h1 class="text-3xl font-bold text-balance">Fundação no ar</h1>
+      <p class="text-brand-800/80">
+        Astro, Tailwind e o adapter da Cloudflare configurados. A API Hono responde em
+        <code class="rounded bg-brand-50 px-1.5 py-0.5 text-brand-700">/api/health</code>
+        com o estado dos bindings D1 e R2.
+      </p>
+    </div>
+
+    <a
+      href="/api/health"
+      class="inline-flex w-fit rounded-lg bg-brand-500 px-5 py-2.5 font-medium text-white transition hover:bg-brand-600 focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:outline-none"
+    >
+      Testar /api/health
+    </a>
+  </main>
 </Layout>
