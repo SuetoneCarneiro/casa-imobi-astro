@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #eaf6fc;
+  --color-brand-400: #4fb8e8;
+  --color-brand-500: #28a0d8; /* cor de ação principal */
+  --color-brand-600: #1e7aa8;
+  --color-brand-700: #185078;
+  --color-brand-800: #104060;
+  --color-brand-900: #0a2a4a;
+  --color-brand-950: #061b33;
+
+  --color-surface: #f8f8f8;
+  --color-whatsapp: #25d366;
+}
