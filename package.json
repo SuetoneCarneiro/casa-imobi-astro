@@ -11,12 +11,19 @@
     "preview": "astro preview",
     "astro": "astro",
     "generate-types": "wrangler types",
-    "check": "astro check"
+    "check": "astro check",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "wrangler d1 migrations apply casaimobi --local",
+    "db:migrate:prod": "wrangler d1 migrations apply casaimobi --remote",
+    "db:seed": "wrangler d1 execute casaimobi --local --file=./seeds/dev.sql",
+    "db:reset": "rm -rf .wrangler/state/v3/d1 && npm run db:migrate && npm run db:seed",
+    "db:shell": "sqlite3 \"$(find .wrangler/state/v3/d1 -name '*.sqlite' ! -name metadata.sqlite)\""
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.1",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.1",
+    "drizzle-orm": "^0.45.2",
     "hono": "^4.13.7",
     "tailwindcss": "^4.3.3",
     "wrangler": "^4.130.0"
@@ -26,6 +33,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "drizzle-kit": "^0.31.10",
     "typescript": "^6.0.3"
   }
 }

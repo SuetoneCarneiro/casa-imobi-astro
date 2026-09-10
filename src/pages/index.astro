@@ -1,7 +1,14 @@
 ---
+import { env } from 'cloudflare:workers'
 import Layout from '../layouts/Layout.astro'
+import { formatBRL } from '../lib/format'
+import { createDb } from '../server/db/client'
+import { countActiveProperties, listActiveProperties } from '../server/db/queries/properties'
 
-// Placeholder da Fase 0. O site institucional é construído na Fase 3.
+// Leitura direta do D1 no SSR — sem passar pela API.
+const db = createDb(env.DB)
+const total = await countActiveProperties(db)
+const imoveis = await listActiveProperties(db, 5)
 ---
 
 <Layout>
@@ -15,14 +22,31 @@ import Layout from '../layouts/Layout.astro'
     />
 
     <div class="space-y-3">
-      <p class="text-sm font-medium tracking-widest text-gold-700 uppercase">Fase 0</p>
-      <h1 class="text-3xl font-bold text-balance text-brand-900">Fundação no ar</h1>
+      <p class="text-sm font-medium tracking-widest text-gold-700 uppercase">Fase 1</p>
+      <h1 class="text-3xl font-bold text-balance text-brand-900">Banco no ar</h1>
       <p class="text-brand-800">
-        Astro, Tailwind e o adapter da Cloudflare configurados. A API Hono responde em
-        <code class="rounded bg-brand-50 px-1.5 py-0.5 text-brand-700">/api/health</code>
-        com o estado dos bindings D1 e R2.
+        Quatro tabelas no D1, migration aplicada e seed carregado.
+        <strong>{total}</strong> imóveis ativos, lidos direto do banco pelo SSR.
       </p>
     </div>
+
+    <ul class="divide-y divide-brand-100 rounded-lg border border-brand-100 bg-white">
+      {
+        imoveis.map((imovel) => (
+          <li class="flex items-baseline justify-between gap-4 px-4 py-3">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-medium text-brand-900">{imovel.title}</p>
+              <p class="text-xs text-brand-700/70">
+                {imovel.code} · {imovel.addressNeighborhood}
+              </p>
+            </div>
+            <span class="shrink-0 text-sm font-semibold tabular-nums text-brand-900">
+              {formatBRL(imovel.price)}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
 
     <a
       href="/api/health"
