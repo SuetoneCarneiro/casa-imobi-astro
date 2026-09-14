@@ -1,0 +1,15 @@
+---
+export interface Props {
+  as?: 'div' | 'article' | 'li'
+  padded?: boolean
+  class?: string
+}
+
+const { as: Tag = 'div', padded = true, class: className = '' } = Astro.props
+---
+
+<Tag
+  class={`overflow-hidden rounded-xl border border-brand-100 bg-white ${padded ? 'p-5' : ''} ${className}`}
+>
+  <slot />
+</Tag>

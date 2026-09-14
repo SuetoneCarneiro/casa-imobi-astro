@@ -1,0 +1,105 @@
+---
+import { site } from '../../lib/site'
+import Container from '../ui/Container.astro'
+import Icon from '../ui/Icon.astro'
+
+const year = new Date().getFullYear()
+
+const socials = [
+  { name: 'instagram', href: site.social.instagram, label: 'Instagram' },
+  { name: 'facebook', href: site.social.facebook, label: 'Facebook' },
+  { name: 'youtube', href: site.social.youtube, label: 'YouTube' },
+] as const
+---
+
+<footer class="bg-brand-950 text-white/75">
+  <Container class="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="sm:col-span-2 lg:col-span-1">
+      <!--
+        Wordmark em tipo, não em imagem: o PNG do logo tem os vazados
+        transparentes e some sobre fundo escuro. Trocar pela versão negativa
+        quando o cliente enviar.
+      -->
+      <p class="font-display text-2xl font-semibold lowercase">
+        <span class="text-white">casa</span><span class="text-gold-400">imobi</span>
+      </p>
+      <p class="mt-1 text-xs tracking-[0.18em] text-white/50 uppercase">{site.tagline}</p>
+      <p class="mt-4 text-sm">CRECI {site.creci}</p>
+    </div>
+
+    <nav aria-label="Rodapé">
+      <h2 class="font-display text-sm font-semibold tracking-wide text-white">Navegação</h2>
+      <ul class="mt-4 flex flex-col gap-2.5 text-sm">
+        {
+          site.nav.map((item) => (
+            <li>
+              <a href={item.href} class="hover:text-gold-400">
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div>
+      <h2 class="font-display text-sm font-semibold tracking-wide text-white">Contato</h2>
+      <ul class="mt-4 flex flex-col gap-2.5 text-sm">
+        {
+          site.phones.map((phone) => (
+            <li>
+              <a href={phone.href} class="inline-flex items-center gap-2 hover:text-gold-400">
+                <Icon name="phone" size={15} />
+                {phone.label}
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a href={`mailto:${site.email}`} class="inline-flex items-center gap-2 hover:text-gold-400">
+            <Icon name="mail" size={15} />
+            {site.email}
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="font-display text-sm font-semibold tracking-wide text-white">Onde estamos</h2>
+      <p class="mt-4 flex gap-2 text-sm">
+        <Icon name="pin" size={15} class="mt-0.5 shrink-0" />
+        <span>
+          {site.address.street}<br />
+          {site.address.reference}<br />
+          {site.address.neighborhood} — {site.address.city}/{site.address.state}<br />
+          CEP {site.address.zip}
+        </span>
+      </p>
+
+      <ul class="mt-5 flex gap-2">
+        {
+          socials.map((s) => (
+            <li>
+              <a
+                href={s.href}
+                target="_blank"
+                rel="noopener"
+                aria-label={s.label}
+                class="flex size-9 items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-gold-500 hover:text-brand-950"
+              >
+                <Icon name={s.name} size={18} />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </Container>
+
+  <div class="border-t border-white/10">
+    <Container class="flex flex-col gap-2 py-6 text-xs text-white/50 sm:flex-row sm:justify-between">
+      <p>© {year} {site.legalName}. Todos os direitos reservados.</p>
+      <p>CRECI {site.creci}</p>
+    </Container>
+  </div>
+</footer>

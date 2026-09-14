@@ -1,0 +1,52 @@
+---
+/**
+ * Vira <a> quando recebe href, <button> quando não recebe.
+ * Evita o erro clássico de estilizar um link como botão e perder a navegação.
+ */
+interface Props {
+  variant?: 'primary' | 'secondary' | 'ghost' | 'whatsapp'
+  size?: 'sm' | 'md' | 'lg'
+  href?: string
+  type?: 'button' | 'submit' | 'reset'
+  block?: boolean
+  class?: string
+  [key: string]: unknown
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  type = 'button',
+  block = false,
+  class: className = '',
+  ...rest
+} = Astro.props
+
+const base =
+  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors ' +
+  'disabled:cursor-not-allowed disabled:opacity-50'
+
+const variants = {
+  primary: 'bg-brand-900 text-white hover:bg-brand-800 active:bg-brand-950',
+  secondary: 'border border-brand-200 bg-white text-ink hover:bg-brand-50 hover:border-brand-300',
+  ghost: 'text-ink hover:bg-brand-50',
+  whatsapp: 'bg-whatsapp text-white hover:brightness-95',
+}
+
+const sizes = {
+  sm: 'h-9 px-3.5 text-sm',
+  md: 'h-11 px-5 text-[15px]',
+  lg: 'h-13 px-7 text-base',
+}
+
+const cls = [base, variants[variant], sizes[size], block && 'w-full', className]
+  .filter(Boolean)
+  .join(' ')
+
+const Tag = href ? 'a' : 'button'
+---
+
+<Tag class={cls} href={href} type={href ? undefined : type} {...rest}>
+  <slot />
+</Tag>

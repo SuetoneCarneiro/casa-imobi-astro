@@ -1,0 +1,48 @@
+---
+import type { HTMLAttributes } from 'astro/types'
+import Field from './Field.astro'
+
+/**
+ * Herda os atributos nativos do <input> — `type` fica corretamente tipado.
+ * `class` e `required` são reapertados: o tipo nativo aceita null e string,
+ * que o Field não usa.
+ */
+interface Props extends Omit<HTMLAttributes<'input'>, 'class' | 'required'> {
+  name: string
+  label: string
+  hint?: string
+  error?: string
+  required?: boolean
+  class?: string
+}
+
+const {
+  name,
+  label,
+  type = 'text',
+  hint,
+  error,
+  required = false,
+  class: className = '',
+  ...rest
+} = Astro.props
+
+const id = `field-${name}`
+const control =
+  'h-11 w-full rounded-lg border bg-white px-3.5 text-[15px] text-ink ' +
+  'placeholder:text-ink-muted/60 focus:outline-none ' +
+  (error ? 'border-red-400' : 'border-brand-200 hover:border-brand-300')
+---
+
+<Field id={id} label={label} hint={hint} error={error} required={required} class={className}>
+  <input
+    id={id}
+    name={name}
+    type={type}
+    required={required}
+    class={control}
+    aria-invalid={error ? 'true' : undefined}
+    aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+    {...rest}
+  />
+</Field>

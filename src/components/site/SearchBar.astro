@@ -1,0 +1,66 @@
+---
+import { NEIGHBORHOODS } from '../../lib/site'
+import Button from '../ui/Button.astro'
+import Icon from '../ui/Icon.astro'
+import Select from '../ui/Select.astro'
+
+interface Props {
+  class?: string
+  values?: { type?: string; neighborhood?: string; bedrooms?: string; maxPrice?: string }
+}
+
+const { class: className = '', values = {} } = Astro.props
+
+const types = [
+  { value: 'house', label: 'Casa' },
+  { value: 'apartment', label: 'Apartamento' },
+  { value: 'land', label: 'Terreno' },
+  { value: 'commercial', label: 'Comercial' },
+]
+
+const bedrooms = [1, 2, 3, 4].map((n) => ({
+  value: String(n),
+  label: n === 4 ? '4+ quartos' : `${n}+ ${n === 1 ? 'quarto' : 'quartos'}`,
+}))
+
+const prices = [200000, 300000, 500000, 800000, 1200000].map((v) => ({
+  value: String(v * 100),
+  label: `Até ${new Intl.NumberFormat('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)}`,
+}))
+
+const neighborhoods = NEIGHBORHOODS.map((n) => ({ value: n, label: n }))
+---
+
+<!-- GET, não POST: a busca vira URL compartilhável e indexável. -->
+<form
+  action="/imoveis"
+  method="get"
+  class={`grid gap-3 rounded-xl border border-brand-100 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-5 lg:items-end ${className}`}
+>
+  <Select name="tipo" label="Tipo" options={types} placeholder="Qualquer" value={values.type} />
+  <Select
+    name="bairro"
+    label="Bairro"
+    options={neighborhoods}
+    placeholder="Qualquer"
+    value={values.neighborhood}
+  />
+  <Select
+    name="quartos"
+    label="Quartos"
+    options={bedrooms}
+    placeholder="Qualquer"
+    value={values.bedrooms}
+  />
+  <Select
+    name="preco_max"
+    label="Preço"
+    options={prices}
+    placeholder="Sem limite"
+    value={values.maxPrice}
+  />
+  <Button type="submit" size="md" block class="lg:h-11">
+    <Icon name="search" size={18} />
+    Buscar
+  </Button>
+</form>
