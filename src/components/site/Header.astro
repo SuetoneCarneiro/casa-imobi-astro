@@ -1,0 +1,95 @@
+---
+import { site } from '../../lib/site'
+import Button from '../ui/Button.astro'
+import Container from '../ui/Container.astro'
+import Icon from '../ui/Icon.astro'
+
+const path = Astro.url.pathname
+const isActive = (href: string) => path === href || path.startsWith(`${href}/`)
+---
+
+<header class="sticky top-0 z-40 border-b border-brand-100 bg-white/95 backdrop-blur">
+  <Container class="flex h-16 items-center justify-between gap-4 sm:h-20">
+    <a href="/" class="shrink-0" aria-label={`${site.name} — página inicial`}>
+      <img
+        src="/logo-casaimobi-web.png"
+        alt={`${site.name} — ${site.tagline}`}
+        width="1000"
+        height="608"
+        class="h-10 w-auto sm:h-12"
+      />
+    </a>
+
+    <nav class="hidden items-center gap-1 md:flex" aria-label="Principal">
+      {
+        site.nav.map((item) => (
+          <a
+            href={item.href}
+            aria-current={isActive(item.href) ? 'page' : undefined}
+            class:list={[
+              'rounded-md px-3 py-2 text-[15px] transition-colors',
+              isActive(item.href)
+                ? 'font-semibold text-ink'
+                : 'text-ink-soft hover:bg-brand-50 hover:text-ink',
+            ]}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="hidden md:block">
+      <Button href={site.whatsapp.link()} variant="whatsapp" size="sm" target="_blank" rel="noopener">
+        <Icon name="whatsapp" size={17} />
+        Falar no WhatsApp
+      </Button>
+    </div>
+
+    <!--
+      Menu mobile sem JavaScript: <details> já traz abrir/fechar, foco e
+      leitura por leitor de tela de graça. Custo: não fecha ao clicar fora.
+    -->
+    <details class="group md:hidden">
+      <summary
+        class="flex size-10 cursor-pointer list-none items-center justify-center rounded-lg text-ink hover:bg-brand-50 [&::-webkit-details-marker]:hidden"
+        aria-label="Abrir menu"
+      >
+        <Icon name="menu" size={22} class="group-open:hidden" />
+        <Icon name="close" size={22} class="hidden group-open:block" />
+      </summary>
+
+      <div class="absolute inset-x-0 top-full border-b border-brand-100 bg-white shadow-lg">
+        <nav class="flex flex-col p-4" aria-label="Principal (mobile)">
+          {
+            site.nav.map((item) => (
+              <a
+                href={item.href}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+                class:list={[
+                  'rounded-lg px-3 py-3 text-base',
+                  isActive(item.href)
+                    ? 'bg-brand-50 font-semibold text-ink'
+                    : 'text-ink-soft hover:bg-brand-50 hover:text-ink',
+                ]}
+              >
+                {item.label}
+              </a>
+            ))
+          }
+          <Button
+            href={site.whatsapp.link()}
+            variant="whatsapp"
+            block
+            class="mt-3"
+            target="_blank"
+            rel="noopener"
+          >
+            <Icon name="whatsapp" size={18} />
+            Falar no WhatsApp
+          </Button>
+        </nav>
+      </div>
+    </details>
+  </Container>
+</header>

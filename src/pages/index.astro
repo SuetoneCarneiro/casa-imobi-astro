@@ -23,8 +23,8 @@ const imoveis = await listActiveProperties(db, 5)
 
     <div class="space-y-3">
       <p class="text-sm font-medium tracking-widest text-gold-700 uppercase">Fase 1</p>
-      <h1 class="text-3xl font-bold text-balance text-brand-900">Banco no ar</h1>
-      <p class="text-brand-800">
+      <h1 class="text-3xl font-bold text-balance text-ink">Banco no ar</h1>
+      <p class="text-ink">
         Quatro tabelas no D1, migration aplicada e seed carregado.
         <strong>{total}</strong> imóveis ativos, lidos direto do banco pelo SSR.
       </p>
@@ -35,12 +35,12 @@ const imoveis = await listActiveProperties(db, 5)
         imoveis.map((imovel) => (
           <li class="flex items-baseline justify-between gap-4 px-4 py-3">
             <div class="min-w-0">
-              <p class="truncate text-sm font-medium text-brand-900">{imovel.title}</p>
-              <p class="text-xs text-brand-700/70">
+              <p class="truncate text-sm font-medium text-ink">{imovel.title}</p>
+              <p class="text-xs text-ink-muted">
                 {imovel.code} · {imovel.addressNeighborhood}
               </p>
             </div>
-            <span class="shrink-0 text-sm font-semibold tabular-nums text-brand-900">
+            <span class="shrink-0 text-sm font-semibold tabular-nums text-ink">
               {formatBRL(imovel.price)}
             </span>
           </li>

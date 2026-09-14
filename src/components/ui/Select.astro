@@ -1,0 +1,67 @@
+---
+import Field from './Field.astro'
+
+interface Props {
+  name: string
+  label: string
+  options: { value: string; label: string }[]
+  placeholder?: string
+  value?: string
+  hint?: string
+  error?: string
+  required?: boolean
+  class?: string
+  [key: string]: unknown
+}
+
+const {
+  name,
+  label,
+  options,
+  placeholder,
+  value,
+  hint,
+  error,
+  required = false,
+  class: className = '',
+  ...rest
+} = Astro.props
+
+const id = `field-${name}`
+---
+
+<Field id={id} label={label} hint={hint} error={error} required={required} class={className}>
+  <div class="relative">
+    <select
+      id={id}
+      name={name}
+      required={required}
+      class={`h-11 w-full appearance-none rounded-lg border bg-white pr-10 pl-3.5 text-[15px] text-ink focus:outline-none ${
+        error ? 'border-red-400' : 'border-brand-200 hover:border-brand-300'
+      }`}
+      aria-invalid={error ? 'true' : undefined}
+      {...rest}
+    >
+      {placeholder && <option value="">{placeholder}</option>}
+      {
+        options.map((opt) => (
+          <option value={opt.value} selected={value === opt.value}>
+            {opt.label}
+          </option>
+        ))
+      }
+    </select>
+    <svg
+      class="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-ink-soft"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m6 9 6 6 6-6"></path>
+    </svg>
+  </div>
+</Field>

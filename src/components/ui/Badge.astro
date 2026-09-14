@@ -1,0 +1,22 @@
+---
+interface Props {
+  variant?: 'neutral' | 'brand' | 'gold' | 'muted'
+  class?: string
+}
+
+const { variant = 'neutral', class: className = '' } = Astro.props
+
+const variants = {
+  neutral: 'bg-white/90 text-ink ring-1 ring-brand-900/10',
+  brand: 'bg-brand-900 text-white',
+  /* gold-900 sobre gold-100 — o gold-500 sobre claro não teria contraste. */
+  gold: 'bg-gold-100 text-gold-900',
+  muted: 'bg-brand-50 text-ink-soft',
+}
+---
+
+<span
+  class={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${variants[variant]} ${className}`}
+>
+  <slot />
+</span>

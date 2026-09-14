@@ -1,0 +1,86 @@
+---
+/**
+ * Ícones inline. Sem biblioteca: são poucos, e inline não custa request nem JS.
+ * Traçado uniforme (1.75) para todos lerem igual a 20px.
+ */
+export type IconName =
+  | 'bed' | 'bath' | 'car' | 'area' | 'home' | 'building' | 'land' | 'store'
+  | 'whatsapp' | 'instagram' | 'facebook' | 'youtube'
+  | 'phone' | 'mail' | 'pin' | 'search' | 'menu' | 'close' | 'arrow-right' | 'check'
+
+interface Props {
+  name: IconName
+  size?: number
+  class?: string
+}
+
+const { name, size = 20, class: className = '' } = Astro.props
+
+const stroke: Partial<Record<IconName, string>> = {
+  bed: 'M3 18v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5M3 18v2M21 18v2M3 13V6M7 11V9.5A1.5 1.5 0 0 1 8.5 8h3A1.5 1.5 0 0 1 13 9.5V11',
+  bath: 'M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-3ZM6 12V6a2 2 0 0 1 2-2h1M7 19l-1 2M17 19l1 2',
+  car: 'M5 17h14M5 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm18 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM3 17v-4l2-5a2 2 0 0 1 1.9-1.4h10.2A2 2 0 0 1 19 8l2 5v4M5.5 13h13',
+  area: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5M9 9h6v6H9z',
+  home: 'M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7.5ZM9.5 20v-5h5v5',
+  building: 'M5 21V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v17M15 21V9h3a1 1 0 0 1 1 1v11M2 21h20M8.5 7h3M8.5 11h3M8.5 15h3',
+  land: 'M3 19h18M3 19 7 8h10l4 11M9.5 19v-4h5v4M7.5 12h9',
+  store: 'M4 9h16v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9ZM3 9l1.5-4.4A1 1 0 0 1 5.4 4h13.2a1 1 0 0 1 .95.68L21 9M10 20v-5h4v5',
+  phone: 'M6.5 3h3l1.5 4-2 1.5a12 12 0 0 0 5.5 5.5L16 12l4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.2 2 2 0 0 1 6.5 3Z',
+  mail: 'M3 6.5h18v11H3zM3 7l9 6 9-6',
+  pin: 'M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11ZM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
+  search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM16.2 16.2 21 21',
+  menu: 'M4 7h16M4 12h16M4 17h16',
+  close: 'M6 6l12 12M18 6 6 18',
+  'arrow-right': 'M4 12h15M13 6l6 6-6 6',
+  check: 'M4.5 12.5 9 17 19.5 6.5',
+}
+
+const filled: Partial<Record<IconName, string>> = {
+  whatsapp:
+    'M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 2a8 8 0 0 1 0 16 8 8 0 0 1-4.3-1.3l-.4-.2-2.5.7.7-2.4-.3-.4A8 8 0 0 1 12 4Zm-3.3 4c-.2 0-.5 0-.7.4-.3.3-.9.9-.9 2.1s.9 2.4 1 2.6c.2.2 1.8 2.9 4.5 3.9 2.2.9 2.7.7 3.2.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2l-.6-.3-1.7-.8c-.2 0-.4-.1-.6.2l-.8 1c-.2.2-.3.2-.5.1-.3-.1-1.2-.4-2.2-1.4-.8-.7-1.3-1.6-1.5-1.8-.1-.3 0-.4.1-.5l.4-.5.3-.5v-.5l-.8-1.8c-.2-.4-.4-.4-.6-.4h-.4Z',
+  instagram:
+    'M8 3h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3H8Zm4 2.8a4.2 4.2 0 1 1 0 8.4 4.2 4.2 0 0 1 0-8.4Zm0 2a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4ZM16.8 6a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z',
+  facebook:
+    'M13.5 22v-8h2.7l.4-3.1h-3.1V8.9c0-.9.25-1.5 1.55-1.5h1.65V4.6A22 22 0 0 0 14.3 4.5c-2.4 0-4 1.45-4 4.1v2.3H7.6V14h2.7v8h3.2Z',
+  youtube:
+    'M21.6 7.2a2.5 2.5 0 0 0-1.75-1.75C18.3 5 12 5 12 5s-6.3 0-7.85.45A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.75 1.75C5.7 19 12 19 12 19s6.3 0 7.85-.45a2.5 2.5 0 0 0 1.75-1.75A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8ZM10 15.1V8.9l5.2 3.1-5.2 3.1Z',
+}
+
+const d = stroke[name]
+const f = filled[name]
+---
+
+{
+  d && (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      class={className}
+    >
+      <path d={d} />
+    </svg>
+  )
+}
+{
+  f && (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      class={className}
+    >
+      <path d={f} />
+    </svg>
+  )
+}
