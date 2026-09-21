@@ -1,0 +1,17 @@
+---
+import type { Property } from '../../server/db/schema'
+import PropertyCard from './PropertyCard.astro'
+
+interface Props {
+  properties: Property[]
+  /** Quantos cartões carregam a imagem sem lazy, por estarem na primeira dobra. */
+  eager?: number
+  class?: string
+}
+
+const { properties, eager = 3, class: className = '' } = Astro.props
+---
+
+<div class={`grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ${className}`}>
+  {properties.map((property, i) => <PropertyCard property={property} priority={i < eager} />)}
+</div>

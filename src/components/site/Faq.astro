@@ -1,0 +1,32 @@
+---
+interface Props {
+  items: { question: string; answer: string }[]
+}
+
+const { items } = Astro.props
+---
+
+<!-- <details> dá abrir, fechar e acessibilidade de teclado sem JavaScript. -->
+<div class="divide-y divide-brand-100 overflow-hidden rounded-xl border border-brand-100 bg-white">
+  {
+    items.map((item) => (
+      <details class="group">
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left font-medium text-ink hover:bg-brand-50 [&::-webkit-details-marker]:hidden">
+          {item.question}
+          <svg
+            class="size-5 shrink-0 text-brand-600 transition-transform group-open:rotate-45"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </summary>
+        <p class="px-5 pb-5 text-[15px] leading-relaxed text-ink-soft">{item.answer}</p>
+      </details>
+    ))
+  }
+</div>

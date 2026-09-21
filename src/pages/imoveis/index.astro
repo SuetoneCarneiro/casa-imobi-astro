@@ -1,0 +1,114 @@
+---
+import { env } from 'cloudflare:workers'
+import EmptyState from '../../components/site/EmptyState.astro'
+import Pagination from '../../components/site/Pagination.astro'
+import PropertyGrid from '../../components/site/PropertyGrid.astro'
+import SearchBar from '../../components/site/SearchBar.astro'
+import Button from '../../components/ui/Button.astro'
+import Container from '../../components/ui/Container.astro'
+import SiteLayout from '../../layouts/SiteLayout.astro'
+import { hasAnyFilter, parseFilters } from '../../lib/filters'
+import { PROPERTY_TYPE_LABELS } from '../../lib/format'
+import { site } from '../../lib/site'
+import { createDb } from '../../server/db/client'
+import { listNeighborhoods, searchProperties } from '../../server/db/queries/properties'
+
+const filtros = parseFilters(Astro.url)
+
+const db = createDb(env.DB)
+const [resultado, bairros] = await Promise.all([
+  searchProperties(db, filtros, filtros.page),
+  listNeighborhoods(db),
+])
+
+const { items, total, page, totalPages } = resultado
+const filtrado = hasAnyFilter(filtros)
+
+// Resumo dos filtros ativos, para o visitante saber o que está vendo.
+const ativos = [
+  filtros.type && PROPERTY_TYPE_LABELS[filtros.type],
+  filtros.neighborhood,
+  filtros.minBedrooms && `${filtros.minBedrooms}+ quartos`,
+  filtros.maxPrice &&
+    `até ${new Intl.NumberFormat('pt-BR', {
+      notation: 'compact',
+      style: 'currency',
+      currency: 'BRL',
+      maximumFractionDigits: 0,
+    }).format(filtros.maxPrice / 100)}`,
+].filter(Boolean) as string[]
+
+const titulo = filtrado ? `Imóveis: ${ativos.join(', ')}` : 'Imóveis à venda em Caruaru'
+---
+
+<SiteLayout
+  title={`${titulo} — ${site.name}`}
+  description="Casas, apartamentos, terrenos e salas comerciais à venda em Caruaru e região."
+>
+  <section class="border-b border-brand-100 bg-gradient-to-b from-brand-50 to-surface">
+    <Container class="py-10 sm:py-14">
+      <h1 class="font-display text-3xl font-bold text-balance text-ink sm:text-4xl">
+        Imóveis à venda
+      </h1>
+      <p class="mt-2 text-ink-soft">
+        {total === 0
+          ? 'Nenhum imóvel encontrado com esses filtros.'
+          : `${total} ${total === 1 ? 'imóvel disponível' : 'imóveis disponíveis'}`}
+      </p>
+      <SearchBar
+        neighborhoods={bairros}
+        class="mt-8"
+        values={{
+          type: filtros.type,
+          neighborhood: filtros.neighborhood,
+          bedrooms: filtros.minBedrooms ? String(filtros.minBedrooms) : undefined,
+          maxPrice: filtros.maxPrice ? String(filtros.maxPrice) : undefined,
+        }}
+      />
+      {
+        filtrado && (
+          <p class="mt-4 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+            <span>Filtrando por {ativos.join(', ')}.</span>
+            <a href="/imoveis" class="font-medium text-brand-700 underline underline-offset-2">
+              Limpar filtros
+            </a>
+          </p>
+        )
+      }
+    </Container>
+  </section>
+
+  <Container class="py-12 sm:py-16">
+    {
+      items.length > 0 ? (
+        <>
+          <PropertyGrid properties={items} />
+          <div class="mt-12">
+            <Pagination url={Astro.url} page={page} totalPages={totalPages} />
+          </div>
+        </>
+      ) : (
+        <EmptyState
+          title="Nenhum imóvel com esses filtros"
+          description="Tente ampliar a faixa de preço ou remover o filtro de bairro. Se preferir, conte o que procura e buscamos para você."
+        >
+          <div class="mt-3 flex flex-wrap justify-center gap-3">
+            {filtrado && (
+              <Button href="/imoveis" variant="secondary">
+                Limpar filtros
+              </Button>
+            )}
+            <Button
+              href={site.whatsapp.link('Olá! Não encontrei no site o que procuro. Podem me ajudar?')}
+              variant="whatsapp"
+              target="_blank"
+              rel="noopener"
+            >
+              Falar no WhatsApp
+            </Button>
+          </div>
+        </EmptyState>
+      )
+    }
+  </Container>
+</SiteLayout>

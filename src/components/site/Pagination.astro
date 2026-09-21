@@ -1,0 +1,61 @@
+---
+import { pageUrl } from '../../lib/filters'
+import Icon from '../ui/Icon.astro'
+
+interface Props {
+  url: URL
+  page: number
+  totalPages: number
+}
+
+const { url, page, totalPages } = Astro.props
+
+// Janela curta em volta da página atual: o acervo é pequeno e não justifica
+// numeração completa nem reticências elaboradas.
+const from = Math.max(1, page - 2)
+const to = Math.min(totalPages, from + 4)
+const numbers = Array.from({ length: to - from + 1 }, (_, i) => from + i)
+---
+
+{
+  totalPages > 1 && (
+    <nav class="flex items-center justify-center gap-1.5" aria-label="Paginação">
+      {page > 1 && (
+        <a
+          href={pageUrl(url, page - 1)}
+          rel="prev"
+          class="flex h-10 items-center gap-1 rounded-lg border border-brand-200 px-3 text-sm text-ink-soft hover:bg-brand-50"
+        >
+          <Icon name="arrow-right" size={15} class="rotate-180" />
+          Anterior
+        </a>
+      )}
+
+      {numbers.map((n) => (
+        <a
+          href={pageUrl(url, n)}
+          aria-current={n === page ? 'page' : undefined}
+          class:list={[
+            'flex size-10 items-center justify-center rounded-lg text-sm tabular-nums',
+            n === page
+              ? 'bg-brand-900 font-semibold text-white'
+              : 'border border-brand-200 text-ink-soft hover:bg-brand-50',
+          ]}
+        >
+          {n}
+        </a>
+      ))}
+
+      {page < totalPages && (
+        <a
+          href={pageUrl(url, page + 1)}
+          rel="next"
+          class="flex h-10 items-center gap-1 rounded-lg border border-brand-200 px-3 text-sm text-ink-soft hover:bg-brand-50"
+        >
+          Próxima
+          <Icon name="arrow-right" size={15} />
+        </a>
+      )}
+    </nav>
+  )
+}

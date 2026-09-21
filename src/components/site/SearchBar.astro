@@ -5,11 +5,18 @@ import Icon from '../ui/Icon.astro'
 import Select from '../ui/Select.astro'
 
 interface Props {
+  /** Bairros vindos do banco. Sem eles, cai na lista fixa de referência. */
+  neighborhoods?: string[]
+  values?: {
+    type?: string
+    neighborhood?: string
+    bedrooms?: string
+    maxPrice?: string
+  }
   class?: string
-  values?: { type?: string; neighborhood?: string; bedrooms?: string; maxPrice?: string }
 }
 
-const { class: className = '', values = {} } = Astro.props
+const { neighborhoods, values = {}, class: className = '' } = Astro.props
 
 const types = [
   { value: 'house', label: 'Casa' },
@@ -20,15 +27,23 @@ const types = [
 
 const bedrooms = [1, 2, 3, 4].map((n) => ({
   value: String(n),
-  label: n === 4 ? '4+ quartos' : `${n}+ ${n === 1 ? 'quarto' : 'quartos'}`,
+  label: n === 4 ? '4 ou mais' : `${n} ou mais`,
 }))
 
 const prices = [200000, 300000, 500000, 800000, 1200000].map((v) => ({
   value: String(v * 100),
-  label: `Até ${new Intl.NumberFormat('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)}`,
+  label: `Até ${new Intl.NumberFormat('pt-BR', {
+    notation: 'compact',
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 0,
+  }).format(v)}`,
 }))
 
-const neighborhoods = NEIGHBORHOODS.map((n) => ({ value: n, label: n }))
+const bairros = (neighborhoods?.length ? neighborhoods : [...NEIGHBORHOODS]).map((n) => ({
+  value: n,
+  label: n,
+}))
 ---
 
 <!-- GET, não POST: a busca vira URL compartilhável e indexável. -->
@@ -41,7 +56,7 @@ const neighborhoods = NEIGHBORHOODS.map((n) => ({ value: n, label: n }))
   <Select
     name="bairro"
     label="Bairro"
-    options={neighborhoods}
+    options={bairros}
     placeholder="Qualquer"
     value={values.neighborhood}
   />

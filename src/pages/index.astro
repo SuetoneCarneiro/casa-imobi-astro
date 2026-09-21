@@ -1,58 +1,218 @@
 ---
 import { env } from 'cloudflare:workers'
-import Layout from '../layouts/Layout.astro'
-import { formatBRL } from '../lib/format'
+import Faq from '../components/site/Faq.astro'
+import PropertyCarousel from '../components/site/PropertyCarousel.astro'
+import SearchBar from '../components/site/SearchBar.astro'
+import Button from '../components/ui/Button.astro'
+import Container from '../components/ui/Container.astro'
+import Icon from '../components/ui/Icon.astro'
+import Section from '../components/ui/Section.astro'
+import SiteLayout from '../layouts/SiteLayout.astro'
+import { PROPERTY_TYPE_LABELS } from '../lib/format'
+import { site } from '../lib/site'
 import { createDb } from '../server/db/client'
-import { countActiveProperties, listActiveProperties } from '../server/db/queries/properties'
+import {
+  countByType,
+  listNeighborhoods,
+  searchProperties,
+} from '../server/db/queries/properties'
 
-// Leitura direta do D1 no SSR — sem passar pela API.
 const db = createDb(env.DB)
-const total = await countActiveProperties(db)
-const imoveis = await listActiveProperties(db, 5)
+
+// Uma busca por categoria. `searchProperties` já devolve os itens e o total,
+// então o rótulo do botão "Ver todos" sai da mesma consulta.
+const [casas, apartamentos, terrenos, bairros, porTipo] = await Promise.all([
+  searchProperties(db, { type: 'house' }),
+  searchProperties(db, { type: 'apartment' }),
+  searchProperties(db, { type: 'land' }),
+  listNeighborhoods(db),
+  countByType(db),
+])
+
+const acervo = [
+  { title: 'Casas', icon: 'home', tipo: 'house', resultado: casas },
+  { title: 'Apartamentos', icon: 'building', tipo: 'apartment', resultado: apartamentos },
+  { title: 'Terrenos', icon: 'land', tipo: 'land', resultado: terrenos },
+] as const
+
+// Categoria sem imóvel não vira carrossel vazio, simplesmente não aparece.
+const acervoVisivel = acervo.filter((c) => c.resultado.items.length > 0)
+
+const tipos = (['house', 'apartment', 'land', 'commercial'] as const).map((tipo) => ({
+  tipo,
+  label: PROPERTY_TYPE_LABELS[tipo],
+  total: porTipo[tipo] ?? 0,
+  icon: ({ house: 'home', apartment: 'building', land: 'land', commercial: 'store' } as const)[tipo],
+}))
+
+const passos = [
+  {
+    titulo: 'Conte o que você procura',
+    texto: 'Chame no WhatsApp e diga o tipo de imóvel, o bairro e quanto pretende investir.',
+  },
+  {
+    titulo: 'Receba opções filtradas',
+    texto: 'Enviamos apenas imóveis que atendem o que você pediu, com fotos e informações completas.',
+  },
+  {
+    titulo: 'Agende a visita',
+    texto: 'Marcamos a visita no horário que for melhor para você e acompanhamos todo o processo.',
+  },
+]
+
+const faq = [
+  {
+    question: 'Vocês atendem quais cidades?',
+    answer: 'Atuamos em Caruaru e nas cidades da região do Agreste pernambucano.',
+  },
+  {
+    question: 'Preciso pagar alguma taxa para visitar um imóvel?',
+    answer: 'Não. O atendimento e as visitas não têm custo para quem está procurando imóvel.',
+  },
+  {
+    question: 'Como faço para anunciar meu imóvel?',
+    answer:
+      'Chame no WhatsApp com as informações do imóvel. Fazemos a avaliação, orientamos sobre a documentação e cuidamos da divulgação.',
+  },
+  {
+    question: 'Vocês ajudam com financiamento?',
+    answer:
+      'Sim. Orientamos sobre as condições de financiamento e sobre a documentação necessária em cada etapa da negociação.',
+  },
+  {
+    question: 'Em quanto tempo recebo uma resposta?',
+    answer: 'Respondemos no WhatsApp dentro do horário comercial, de segunda a sexta e no sábado pela manhã.',
+  },
+]
 ---
 
-<Layout>
-  <main class="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-8 px-6 py-16">
-    <img
-      src="/logo-casaimobi-web.png"
-      alt="CasaImobi — Negócios Imobiliários"
-      width="1000"
-      height="608"
-      class="w-[200px]"
-    />
+<SiteLayout
+  title={`${site.name} — Imóveis à venda em Caruaru/PE`}
+  description="Casas, apartamentos, terrenos e salas comerciais à venda em Caruaru e região. Atendimento direto pelo WhatsApp."
+>
+  <!-- Hero -->
+  <section class="border-b border-brand-100 bg-gradient-to-b from-brand-50 to-surface">
+    <Container class="py-14 sm:py-20">
+      <div class="max-w-2xl">
+        <p class="mb-3 text-xs font-semibold tracking-[0.14em] text-gold-700 uppercase">
+          CRECI {site.creci} · Caruaru e região
+        </p>
+        <h1 class="font-display text-4xl leading-[1.1] font-bold text-balance text-ink sm:text-5xl">
+          O imóvel certo em Caruaru, sem formulário e sem enrolação.
+        </h1>
+        <p class="mt-4 max-w-xl text-lg text-ink-soft">
+          Busque pelo que importa para você e fale direto com quem conhece cada rua da cidade.
+        </p>
+      </div>
 
-    <div class="space-y-3">
-      <p class="text-sm font-medium tracking-widest text-gold-700 uppercase">Fase 1</p>
-      <h1 class="text-3xl font-bold text-balance text-ink">Banco no ar</h1>
-      <p class="text-ink">
-        Quatro tabelas no D1, migration aplicada e seed carregado.
-        <strong>{total}</strong> imóveis ativos, lidos direto do banco pelo SSR.
-      </p>
-    </div>
+      <SearchBar neighborhoods={bairros} class="mt-10" />
+    </Container>
+  </section>
 
-    <ul class="divide-y divide-brand-100 rounded-lg border border-brand-100 bg-white">
+  <!-- Tipos de imóvel -->
+  <Section title="O que você procura" tone="white">
+    <ul class="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {
-        imoveis.map((imovel) => (
-          <li class="flex items-baseline justify-between gap-4 px-4 py-3">
-            <div class="min-w-0">
-              <p class="truncate text-sm font-medium text-ink">{imovel.title}</p>
-              <p class="text-xs text-ink-muted">
-                {imovel.code} · {imovel.addressNeighborhood}
-              </p>
-            </div>
-            <span class="shrink-0 text-sm font-semibold tabular-nums text-ink">
-              {formatBRL(imovel.price)}
-            </span>
+        tipos.map((t) => (
+          <li>
+            <a
+              href={`/imoveis?tipo=${t.tipo}`}
+              class="flex h-full flex-col gap-2 rounded-xl border border-brand-100 bg-white p-5 transition-colors hover:border-brand-300 hover:bg-brand-50"
+            >
+              <Icon name={t.icon} size={28} class="text-brand-600" />
+              <span class="font-display text-lg font-semibold text-ink">{t.label}</span>
+              <span class="text-sm text-ink-muted">
+                {t.total === 0
+                  ? 'Em breve'
+                  : `${t.total} ${t.total === 1 ? 'imóvel' : 'imóveis'}`}
+              </span>
+            </a>
           </li>
         ))
       }
     </ul>
+  </Section>
 
-    <a
-      href="/api/health"
-      class="inline-flex w-fit rounded-lg bg-brand-900 px-5 py-2.5 font-medium text-white transition hover:bg-brand-800 focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:outline-none"
-    >
-      Testar /api/health
-    </a>
-  </main>
-</Layout>
+  <!-- Acervo, separado por categoria -->
+  <Section
+    eyebrow="Acervo"
+    title="Imóveis disponíveis"
+    description="Arraste para o lado para ver mais de cada categoria."
+  >
+    <div class="flex flex-col gap-16">
+      {
+        acervoVisivel.map((categoria, i) => (
+          <PropertyCarousel
+            title={categoria.title}
+            icon={categoria.icon}
+            properties={categoria.resultado.items}
+            total={categoria.resultado.total}
+            href={`/imoveis?tipo=${categoria.tipo}`}
+            priority={i === 0}
+          />
+        ))
+      }
+    </div>
+  </Section>
+
+  <!-- Como funciona -->
+  <Section eyebrow="Como funciona" title="Três passos até a chave na mão" tone="white">
+    <ol class="grid gap-6 sm:grid-cols-3">
+      {
+        passos.map((passo, i) => (
+          <li class="flex flex-col gap-3 rounded-xl border border-brand-100 p-6">
+            <span class="flex size-10 items-center justify-center rounded-full bg-brand-900 font-display text-lg font-semibold text-white">
+              {i + 1}
+            </span>
+            <h3 class="font-display text-lg font-semibold text-ink">{passo.titulo}</h3>
+            <p class="text-[15px] text-ink-soft">{passo.texto}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </Section>
+
+  <!-- Para proprietários -->
+  <section class="bg-brand-900 text-white">
+    <Container class="flex flex-col gap-6 py-14 sm:py-20 lg:flex-row lg:items-center lg:justify-between">
+      <div class="max-w-xl">
+        <p class="mb-2 text-xs font-semibold tracking-[0.14em] text-gold-400 uppercase">
+          Para proprietários
+        </p>
+        <h2 class="font-display text-3xl font-semibold text-balance sm:text-4xl">
+          Tem um imóvel para vender?
+        </h2>
+        <p class="mt-3 text-white/75">
+          Fazemos a avaliação, orientamos sobre a documentação e cuidamos da divulgação. Você só
+          precisa nos contar sobre o imóvel.
+        </p>
+      </div>
+      <div class="flex shrink-0 flex-col gap-3 sm:flex-row">
+        <Button
+          href={site.whatsapp.link('Olá! Tenho um imóvel que gostaria de anunciar com a CasaImobi.')}
+          variant="whatsapp"
+          size="lg"
+          target="_blank"
+          rel="noopener"
+        >
+          <Icon name="whatsapp" size={19} />
+          Anunciar meu imóvel
+        </Button>
+        <Button
+          href="/anuncie"
+          size="lg"
+          class="border border-white/25 bg-transparent text-white hover:bg-white/10"
+        >
+          Saber mais
+        </Button>
+      </div>
+    </Container>
+  </section>
+
+  <!-- FAQ -->
+  <Section eyebrow="Dúvidas" title="Perguntas frequentes" tone="white">
+    <div class="max-w-3xl">
+      <Faq items={faq} />
+    </div>
+  </Section>
+</SiteLayout>

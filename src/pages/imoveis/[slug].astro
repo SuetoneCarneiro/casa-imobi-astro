@@ -1,0 +1,190 @@
+---
+import { env } from 'cloudflare:workers'
+import PropertyGrid from '../../components/site/PropertyGrid.astro'
+import Badge from '../../components/ui/Badge.astro'
+import Button from '../../components/ui/Button.astro'
+import Container from '../../components/ui/Container.astro'
+import Icon from '../../components/ui/Icon.astro'
+import SiteLayout from '../../layouts/SiteLayout.astro'
+import {
+  formatArea,
+  formatBRL,
+  PROPERTY_TYPE_ICONS,
+  PROPERTY_TYPE_LABELS,
+  publicAddress,
+} from '../../lib/format'
+import { site } from '../../lib/site'
+import { createDb } from '../../server/db/client'
+import { findPropertyBySlug, listRelatedProperties } from '../../server/db/queries/properties'
+
+const { slug } = Astro.params
+const db = createDb(env.DB)
+const imovel = slug ? await findPropertyBySlug(db, slug) : null
+
+if (!imovel) {
+  Astro.response.status = 404
+}
+
+const relacionados = imovel ? await listRelatedProperties(db, imovel, 3) : []
+
+const specs = imovel
+  ? ([
+      { icon: 'bed', label: 'Quartos', value: imovel.bedrooms },
+      { icon: 'bed', label: 'Suítes', value: imovel.suites },
+      { icon: 'bath', label: 'Banheiros', value: imovel.bathrooms },
+      { icon: 'car', label: 'Vagas', value: imovel.parkingSpaces },
+    ] as const
+  ).filter((s) => s.value > 0)
+  : []
+
+const area = imovel ? formatArea(imovel.usableArea) : null
+
+const mensagem = imovel
+  ? `Olá! Tenho interesse no imóvel ${imovel.code} (${imovel.title}). Ainda está disponível?`
+  : undefined
+---
+
+{
+  !imovel ? (
+    <SiteLayout title={`Imóvel não encontrado — ${site.name}`}>
+      <Container class="flex flex-col items-center gap-4 py-24 text-center">
+        <h1 class="font-display text-3xl font-bold text-ink">Imóvel não encontrado</h1>
+        <p class="max-w-md text-ink-soft">
+          O imóvel que você procura pode ter sido vendido ou saído do ar. Veja o que temos
+          disponível agora.
+        </p>
+        <Button href="/imoveis" class="mt-2">
+          Ver imóveis disponíveis
+        </Button>
+      </Container>
+    </SiteLayout>
+  ) : (
+    <SiteLayout
+      title={`${imovel.title} — ${site.name}`}
+      description={imovel.description ?? `${PROPERTY_TYPE_LABELS[imovel.type]} à venda em ${imovel.addressNeighborhood ?? imovel.addressCity}.`}
+      whatsappMessage={mensagem}
+    >
+      <Container class="py-8 sm:py-12">
+        <nav aria-label="Trilha de navegação" class="mb-6 text-sm text-ink-muted">
+          <a href="/" class="hover:text-ink">Início</a>
+          <span class="mx-1.5">/</span>
+          <a href="/imoveis" class="hover:text-ink">Imóveis</a>
+          <span class="mx-1.5">/</span>
+          <span class="text-ink-soft">{imovel.code}</span>
+        </nav>
+
+        <div class="flex flex-wrap gap-2">
+          <Badge variant="brand">{PROPERTY_TYPE_LABELS[imovel.type]}</Badge>
+          {imovel.isCondo && <Badge variant="gold">Condomínio</Badge>}
+          {imovel.category === 'commercial' && <Badge variant="muted">Comercial</Badge>}
+        </div>
+
+        <h1 class="mt-3 font-display text-3xl font-bold text-balance text-ink sm:text-4xl">
+          {imovel.title}
+        </h1>
+
+        <p class="mt-2 flex items-center gap-1.5 text-ink-soft">
+          <Icon name="pin" size={16} class="text-brand-600" />
+          {publicAddress(imovel)}, {imovel.addressCity}/{imovel.addressState}
+        </p>
+
+        {/* Área de fotos. A galeria real chega na Fase 6, junto com o upload no R2. */}
+        <div class="mt-8 flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 rounded-xl border border-brand-100 bg-brand-50 text-brand-300">
+          <Icon name={PROPERTY_TYPE_ICONS[imovel.type]} size={56} />
+          <span class="text-sm font-medium">Fotos em breve</span>
+        </div>
+
+        <div class="mt-10 grid gap-10 lg:grid-cols-[1fr_20rem] lg:items-start">
+          <div class="flex flex-col gap-10">
+            {(specs.length > 0 || area) && (
+              <section>
+                <h2 class="font-display text-xl font-semibold text-ink">Características</h2>
+                <ul class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  {specs.map((spec) => (
+                    <li class="flex flex-col gap-1 rounded-xl border border-brand-100 bg-white p-4">
+                      <Icon name={spec.icon} size={20} class="text-brand-600" />
+                      <span class="font-display text-xl font-semibold tabular-nums text-ink">
+                        {spec.value}
+                      </span>
+                      <span class="text-sm text-ink-muted">{spec.label}</span>
+                    </li>
+                  ))}
+                  {area && (
+                    <li class="flex flex-col gap-1 rounded-xl border border-brand-100 bg-white p-4">
+                      <Icon name="area" size={20} class="text-brand-600" />
+                      <span class="font-display text-xl font-semibold tabular-nums text-ink">
+                        {area}
+                      </span>
+                      <span class="text-sm text-ink-muted">Área útil</span>
+                    </li>
+                  )}
+                </ul>
+              </section>
+            )}
+
+            {imovel.description && (
+              <section>
+                <h2 class="font-display text-xl font-semibold text-ink">Sobre o imóvel</h2>
+                <p class="mt-3 max-w-prose leading-relaxed whitespace-pre-line text-ink-soft">
+                  {imovel.description}
+                </p>
+              </section>
+            )}
+
+            {imovel.development && (
+              <section>
+                <h2 class="font-display text-xl font-semibold text-ink">Empreendimento</h2>
+                <p class="mt-2 text-ink-soft">{imovel.development}</p>
+              </section>
+            )}
+          </div>
+
+          {/* Cartão de preço e contato, fixo na lateral em telas grandes. */}
+          <aside class="lg:sticky lg:top-24">
+            <div class="flex flex-col gap-4 rounded-xl border border-brand-100 bg-white p-6 shadow-sm">
+              <div>
+                <p class="text-sm text-ink-muted">Valor de venda</p>
+                <p class="font-display text-3xl font-bold tracking-tight tabular-nums text-ink">
+                  {formatBRL(imovel.price)}
+                </p>
+              </div>
+
+              <Button
+                href={site.whatsapp.link(mensagem)}
+                variant="whatsapp"
+                size="lg"
+                block
+                target="_blank"
+                rel="noopener"
+              >
+                <Icon name="whatsapp" size={19} />
+                Tenho interesse
+              </Button>
+
+              {site.phones.map((phone) => (
+                <a
+                  href={phone.href}
+                  class="flex items-center justify-center gap-2 text-sm text-ink-soft hover:text-ink"
+                >
+                  <Icon name="phone" size={15} class="text-brand-600" />
+                  {phone.label}
+                </a>
+              ))}
+
+              <p class="border-t border-brand-100 pt-4 text-center font-mono text-xs text-ink-muted">
+                Código {imovel.code}
+              </p>
+            </div>
+          </aside>
+        </div>
+
+        {relacionados.length > 0 && (
+          <section class="mt-16 border-t border-brand-100 pt-12">
+            <h2 class="font-display text-2xl font-semibold text-ink">Veja também</h2>
+            <PropertyGrid properties={relacionados} class="mt-6" eager={0} />
+          </section>
+        )}
+      </Container>
+    </SiteLayout>
+  )
+}

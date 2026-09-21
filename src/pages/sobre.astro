@@ -1,0 +1,118 @@
+---
+import Button from '../components/ui/Button.astro'
+import Container from '../components/ui/Container.astro'
+import Icon from '../components/ui/Icon.astro'
+import Section from '../components/ui/Section.astro'
+import SiteLayout from '../layouts/SiteLayout.astro'
+import { site } from '../lib/site'
+
+const valores = [
+  {
+    icon: 'pin',
+    titulo: 'Conhecimento da cidade',
+    texto:
+      'Atuamos em Caruaru e região. Conhecemos os bairros, as ruas e o que cada região oferece para quem vai morar ou investir.',
+  },
+  {
+    icon: 'whatsapp',
+    titulo: 'Atendimento direto',
+    texto:
+      'Sem formulário e sem espera. Você fala com uma pessoa no WhatsApp e recebe apenas imóveis que atendem o que pediu.',
+  },
+  {
+    icon: 'check',
+    titulo: 'Documentação em ordem',
+    texto:
+      'Acompanhamos cada etapa da negociação e orientamos sobre a documentação necessária até a escritura.',
+  },
+] as const
+---
+
+<SiteLayout
+  title={`Sobre nós — ${site.name}`}
+  description="Imobiliária em Caruaru/PE com atendimento direto e acompanhamento da negociação do início à escritura."
+>
+  <section class="border-b border-brand-100 bg-gradient-to-b from-brand-50 to-surface">
+    <Container class="py-14 sm:py-20">
+      <p class="mb-3 text-xs font-semibold tracking-[0.14em] text-gold-700 uppercase">
+        CRECI {site.creci}
+      </p>
+      <h1 class="max-w-3xl font-display text-4xl font-bold text-balance text-ink sm:text-5xl">
+        Uma imobiliária de Caruaru, para quem é de Caruaru.
+      </h1>
+      <p class="mt-4 max-w-2xl text-lg text-ink-soft">
+        A {site.legalName} trabalha com compra e venda de casas, apartamentos, terrenos e salas
+        comerciais na cidade e na região do Agreste.
+      </p>
+    </Container>
+  </section>
+
+  <Section tone="white">
+    <div class="grid gap-10 lg:grid-cols-3">
+      {
+        valores.map((v) => (
+          <div class="flex flex-col gap-3">
+            <Icon name={v.icon} size={28} class="text-brand-600" />
+            <h2 class="font-display text-xl font-semibold text-ink">{v.titulo}</h2>
+            <p class="text-[15px] leading-relaxed text-ink-soft">{v.texto}</p>
+          </div>
+        ))
+      }
+    </div>
+  </Section>
+
+  <Section title="Onde estamos">
+    <div class="grid gap-8 sm:grid-cols-2">
+      <div class="flex flex-col gap-3 text-ink-soft">
+        <p class="flex gap-2">
+          <Icon name="pin" size={18} class="mt-0.5 shrink-0 text-brand-600" />
+          <span>
+            {site.address.street}<br />
+            {site.address.reference}<br />
+            {site.address.neighborhood}, {site.address.city}/{site.address.state}<br />
+            CEP {site.address.zip}
+          </span>
+        </p>
+        <Button
+          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.address.full)}`}
+          variant="secondary"
+          class="w-fit"
+          target="_blank"
+          rel="noopener"
+        >
+          Ver no mapa
+          <Icon name="arrow-right" size={16} />
+        </Button>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <h3 class="font-display text-lg font-semibold text-ink">Fale com a gente</h3>
+        {
+          site.phones.map((phone) => (
+            <a href={phone.href} class="flex items-center gap-2 text-ink-soft hover:text-ink">
+              <Icon name="phone" size={16} class="text-brand-600" />
+              {phone.label}
+            </a>
+          ))
+        }
+        <a
+          href={`mailto:${site.email}`}
+          class="flex items-center gap-2 break-all text-ink-soft hover:text-ink"
+        >
+          <Icon name="mail" size={16} class="text-brand-600" />
+          {site.email}
+        </a>
+        <Button
+          href={site.whatsapp.link()}
+          variant="whatsapp"
+          class="mt-2 w-fit"
+          target="_blank"
+          rel="noopener"
+        >
+          <Icon name="whatsapp" size={18} />
+          Falar no WhatsApp
+        </Button>
+      </div>
+    </div>
+  </Section>
+</SiteLayout>
