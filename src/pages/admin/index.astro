@@ -1,0 +1,56 @@
+---
+import { env } from 'cloudflare:workers'
+import Icon from '../../components/ui/Icon.astro'
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { createDb } from '../../server/db/client'
+import { countActiveProperties, countByType } from '../../server/db/queries/properties'
+import { PROPERTY_TYPE_LABELS } from '../../lib/format'
+
+const user = Astro.locals.user!
+const db = createDb(env.DB)
+const [ativos, porTipo] = await Promise.all([countActiveProperties(db), countByType(db)])
+
+const tipos = (['house', 'apartment', 'land', 'commercial'] as const).map((t) => ({
+  label: PROPERTY_TYPE_LABELS[t],
+  total: porTipo[t] ?? 0,
+}))
+---
+
+<AdminLayout title="Visão geral">
+  <header class="mb-8">
+    <h1 class="font-display text-2xl font-semibold text-ink sm:text-3xl">
+      Olá, {user.name.split(' ')[0]}
+    </h1>
+    <p class="mt-1 text-ink-soft">Este é o painel da {`CasaImobi`}.</p>
+  </header>
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-xl border border-brand-100 bg-white p-5">
+      <p class="text-sm text-ink-muted">Imóveis ativos</p>
+      <p class="mt-1 font-display text-3xl font-bold tabular-nums text-ink">{ativos}</p>
+    </div>
+    {
+      tipos.map((t) => (
+        <div class="rounded-xl border border-brand-100 bg-white p-5">
+          <p class="text-sm text-ink-muted">{t.label}</p>
+          <p class="mt-1 font-display text-3xl font-bold tabular-nums text-ink">{t.total}</p>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="mt-8 rounded-xl border border-dashed border-brand-200 bg-white p-6">
+    <h2 class="font-display text-lg font-semibold text-ink">Em construção</h2>
+    <p class="mt-1 text-sm text-ink-soft">
+      O cadastro e a gestão de imóveis entram na próxima fase. Por enquanto, os dados vêm do seed
+      de desenvolvimento.
+    </p>
+    <a
+      href="/imoveis"
+      class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
+    >
+      Ver o site público
+      <Icon name="arrow-right" size={15} />
+    </a>
+  </div>
+</AdminLayout>

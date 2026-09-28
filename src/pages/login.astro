@@ -1,0 +1,52 @@
+---
+import Button from '../components/ui/Button.astro'
+import Input from '../components/ui/Input.astro'
+import Layout from '../layouts/Layout.astro'
+import { site } from '../lib/site'
+
+const erro = Astro.url.searchParams.has('erro')
+const destino = Astro.url.searchParams.get('destino') ?? '/admin'
+---
+
+<Layout title={`Entrar — Painel ${site.name}`} description="Acesso restrito ao painel administrativo.">
+  <main class="flex min-h-dvh items-center justify-center bg-surface px-5 py-12">
+    <div class="w-full max-w-sm">
+      <a href="/" class="mb-8 flex justify-center">
+        <img src="/logo-casaimobi-web.png" alt={site.name} width="1000" height="608" class="h-14 w-auto" />
+      </a>
+
+      <div class="rounded-xl border border-brand-100 bg-white p-6 shadow-sm sm:p-8">
+        <h1 class="font-display text-2xl font-semibold text-ink">Entrar no painel</h1>
+        <p class="mt-1 text-sm text-ink-muted">Acesso restrito à equipe da imobiliária.</p>
+
+        {
+          erro && (
+            <p
+              role="alert"
+              class="mt-5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
+            >
+              E-mail ou senha incorretos.
+            </p>
+          )
+        }
+
+        <form method="post" action="/api/auth/login" class="mt-6 flex flex-col gap-4">
+          <input type="hidden" name="destino" value={destino} />
+          <Input name="email" label="E-mail" type="email" autocomplete="username" required />
+          <Input
+            name="senha"
+            label="Senha"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+          <Button type="submit" block class="mt-2">Entrar</Button>
+        </form>
+      </div>
+
+      <p class="mt-6 text-center text-sm text-ink-muted">
+        <a href="/" class="hover:text-ink">Voltar ao site</a>
+      </p>
+    </div>
+  </main>
+</Layout>

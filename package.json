@@ -17,7 +17,8 @@
     "db:migrate:prod": "wrangler d1 migrations apply casaimobi --remote",
     "db:seed": "wrangler d1 execute casaimobi --local --file=./seeds/dev.sql",
     "db:reset": "rm -rf .wrangler/state/v3/d1 && npm run db:migrate && npm run db:seed",
-    "db:shell": "sqlite3 \"$(find .wrangler/state/v3/d1 -name '*.sqlite' ! -name metadata.sqlite)\""
+    "db:shell": "sqlite3 \"$(find .wrangler/state/v3/d1 -name '*.sqlite' ! -name metadata.sqlite)\"",
+    "admin:create": "node --experimental-strip-types scripts/criar-admin.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.1",

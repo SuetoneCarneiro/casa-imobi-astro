@@ -10,13 +10,10 @@ import Input from '../../components/ui/Input.astro'
 import Section from '../../components/ui/Section.astro'
 import Select from '../../components/ui/Select.astro'
 import Textarea from '../../components/ui/Textarea.astro'
-import SiteLayout from '../../layouts/SiteLayout.astro'
+import AdminLayout from '../../layouts/AdminLayout.astro'
 import type { Property } from '../../server/db/schema'
 
-// Página de desenvolvimento. Em produção não existe.
-if (!import.meta.env.DEV) {
-  return new Response(null, { status: 404 })
-}
+// Vive dentro do painel: quem garante o acesso é o middleware de sessão.
 
 const now = Date.now()
 const exemplo: Property = {
@@ -75,7 +72,7 @@ const icons: IconName[] = [
 ]
 ---
 
-<SiteLayout title="Styleguide — CasaImobi" description="Componentes e tokens do projeto.">
+<AdminLayout title="Guia de estilo">
   <Section eyebrow="Fase 2" title="Design system" description="Tokens e componentes do projeto. Esta página só existe em desenvolvimento." tone="white" />
 
   <Section title="Cores">
@@ -196,4 +193,4 @@ const icons: IconName[] = [
       ))}
     </ul>
   </Section>
-</SiteLayout>
+</AdminLayout>

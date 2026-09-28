@@ -1,0 +1,79 @@
+---
+import Icon, { type IconName } from '../components/ui/Icon.astro'
+import { site } from '../lib/site'
+import Layout from './Layout.astro'
+
+interface Props {
+  title: string
+  description?: string
+}
+
+const { title } = Astro.props
+const user = Astro.locals.user!
+const path = Astro.url.pathname
+
+const nav: { href: string; label: string; icon: IconName }[] = [
+  { href: '/admin', label: 'Visão geral', icon: 'home' },
+  { href: '/admin/styleguide', label: 'Guia de estilo', icon: 'check' },
+]
+
+const ativo = (href: string) => path === href || path.startsWith(`${href}/`)
+---
+
+<Layout title={`${title} — Painel ${site.name}`}>
+  <div class="flex min-h-dvh flex-col bg-surface">
+    <header class="border-b border-brand-100 bg-white">
+      <div class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-5 sm:px-6">
+        <div class="flex items-center gap-3">
+          <img src="/logo-casaimobi-web.png" alt={site.name} width="1000" height="608" class="h-8 w-auto" />
+          <span class="hidden text-xs font-semibold tracking-[0.14em] text-ink-muted uppercase sm:inline">
+            Painel
+          </span>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <span class="hidden text-sm text-ink-soft sm:inline">{user.name}</span>
+          <!-- Logout é POST: sair não pode acontecer por link pré-carregado. -->
+          <form method="post" action="/api/auth/logout">
+            <button
+              type="submit"
+              class="flex h-9 items-center gap-1.5 rounded-lg border border-brand-200 px-3 text-sm text-ink-soft transition-colors hover:bg-brand-50"
+            >
+              Sair
+            </button>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-5 py-8 sm:px-6 lg:flex-row">
+      <nav class="lg:w-56 lg:shrink-0" aria-label="Painel">
+        <ul class="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+          {
+            nav.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={ativo(item.href) ? 'page' : undefined}
+                  class:list={[
+                    'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm whitespace-nowrap transition-colors',
+                    ativo(item.href)
+                      ? 'bg-brand-900 font-medium text-white'
+                      : 'text-ink-soft hover:bg-brand-50 hover:text-ink',
+                  ]}
+                >
+                  <Icon name={item.icon} size={17} />
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <main class="min-w-0 flex-1">
+        <slot />
+      </main>
+    </div>
+  </div>
+</Layout>

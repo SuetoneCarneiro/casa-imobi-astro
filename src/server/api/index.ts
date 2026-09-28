@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { auth } from './routes/auth'
 import { health } from './routes/health'
 
 /**
@@ -22,6 +23,7 @@ export type ApiEnv = { Bindings: ApiBindings }
 export const api = new Hono<ApiEnv>().basePath('/api')
 
 api.route('/health', health)
+api.route('/auth', auth)
 
 api.notFound((c) => c.json({ error: 'Rota não encontrada' }, 404))
 
