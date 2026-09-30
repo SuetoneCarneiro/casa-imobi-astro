@@ -1,0 +1,79 @@
+---
+import { env } from 'cloudflare:workers'
+import PropertyForm from '../../../components/admin/PropertyForm.astro'
+import Badge from '../../../components/ui/Badge.astro'
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { createDb } from '../../../server/db/client'
+import { findPropertyById } from '../../../server/db/queries/properties'
+import { updateProperty } from '../../../server/services/properties'
+import {
+  parsePropertyForm,
+  toFieldErrors,
+  type FieldErrors,
+} from '../../../server/validation/property'
+
+const id = Number(Astro.params.id)
+const db = createDb(env.DB)
+const imovel = Number.isInteger(id) ? await findPropertyById(db, id) : null
+
+if (!imovel) {
+  return Astro.redirect('/admin/imoveis', 302)
+}
+
+let errors: FieldErrors = {}
+let values: Record<string, unknown> = {
+  ...imovel,
+  // O banco guarda centavos; o formulário mostra reais.
+  price: (imovel.price / 100).toFixed(2).replace('.', ','),
+  usableArea: imovel.usableArea ?? '',
+}
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData()
+  values = Object.fromEntries(form)
+
+  const parsed = parsePropertyForm(form)
+  if (parsed.success) {
+    await updateProperty(db, imovel.id, parsed.data)
+    return Astro.redirect(`/admin/imoveis?salvo=${imovel.code}`, 303)
+  }
+
+  errors = toFieldErrors(parsed.error)
+}
+---
+
+<AdminLayout title={imovel.title}>
+  <header class="mb-8">
+    <a href="/admin/imoveis" class="text-sm text-ink-muted hover:text-ink">← Imóveis</a>
+    <div class="mt-2 flex flex-wrap items-center gap-3">
+      <h1 class="font-display text-2xl font-semibold text-ink sm:text-3xl">{imovel.title}</h1>
+      {imovel.status === 'active' ? <Badge variant="gold">Ativo</Badge> : <Badge variant="muted">Inativo</Badge>}
+    </div>
+    <p class="mt-1 flex flex-wrap items-center gap-3 text-sm text-ink-muted">
+      <span class="font-mono">{imovel.code}</span>
+      {
+        imovel.status === 'active' && (
+          <a href={`/imoveis/${imovel.slug}`} target="_blank" rel="noopener" class="hover:text-ink hover:underline">
+            Ver no site ↗
+          </a>
+        )
+      }
+    </p>
+  </header>
+
+  {
+    Object.keys(errors).length > 0 && (
+      <p role="alert" class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        Confira os campos destacados abaixo.
+      </p>
+    )
+  }
+
+  <PropertyForm
+    action={`/admin/imoveis/${imovel.id}`}
+    values={values}
+    errors={errors}
+    submitLabel="Salvar alterações"
+    cancelHref="/admin/imoveis"
+  />
+</AdminLayout>

@@ -1,7 +1,9 @@
 ---
 import PropertyCard from '../../components/site/PropertyCard.astro'
 import SearchBar from '../../components/site/SearchBar.astro'
+import Pagination from '../../components/site/Pagination.astro'
 import Badge from '../../components/ui/Badge.astro'
+import ConfirmAction from '../../components/ui/ConfirmAction.astro'
 import Button from '../../components/ui/Button.astro'
 import Card from '../../components/ui/Card.astro'
 import Checkbox from '../../components/ui/Checkbox.astro'
@@ -180,6 +182,60 @@ const icons: IconName[] = [
     <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       <PropertyCard property={exemplo} coverUrl="/logo-casaimobi-web.png" />
       <PropertyCard property={semFoto} />
+    </div>
+  </Section>
+
+  <Section title="Painel" description="Componentes que só existem na área administrativa.">
+    <div class="flex flex-col gap-10">
+      <div>
+        <h3 class="mb-3 text-sm font-semibold">Tabela</h3>
+        <div class="overflow-x-auto rounded-xl border border-brand-100 bg-white">
+          <table class="w-full min-w-[32rem] text-sm">
+            <thead>
+              <tr class="border-b border-brand-100 text-left text-xs tracking-wide text-ink-muted uppercase">
+                <th class="px-4 py-3 font-medium">Código</th>
+                <th class="px-4 py-3 font-medium">Imóvel</th>
+                <th class="px-4 py-3 font-medium">Preço</th>
+                <th class="px-4 py-3 font-medium">Situação</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-brand-100">
+                <td class="px-4 py-3 font-mono text-xs text-ink-muted">CI-0001</td>
+                <td class="px-4 py-3 font-medium text-ink">Casa com 3 quartos e suíte</td>
+                <td class="px-4 py-3 tabular-nums text-ink-soft">R$ 450.000</td>
+                <td class="px-4 py-3"><Badge variant="gold">Ativo</Badge></td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-xs text-ink-muted">CI-0007</td>
+                <td class="px-4 py-3 font-medium text-ink">Casa 2 quartos na Cidade Alta</td>
+                <td class="px-4 py-3 tabular-nums text-ink-soft">R$ 210.000</td>
+                <td class="px-4 py-3"><Badge variant="muted">Inativo</Badge></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="mb-3 text-sm font-semibold">Confirmação de ação</h3>
+        <p class="mb-3 max-w-prose text-sm text-ink-muted">
+          Abre com <code class="font-mono">&lt;details&gt;</code>, sem JavaScript. O botão real de
+          confirmar só existe dentro do painel aberto.
+        </p>
+        <ConfirmAction
+          action="/admin/styleguide"
+          label="Inativar"
+          question="Tirar CI-0001 do site? O registro continua no painel e pode voltar quando quiser."
+          confirmLabel="Inativar"
+          tone="danger"
+        />
+      </div>
+
+      <div>
+        <h3 class="mb-3 text-sm font-semibold">Paginação</h3>
+        <Pagination url={Astro.url} page={2} totalPages={5} />
+      </div>
     </div>
   </Section>
 

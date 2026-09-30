@@ -29,7 +29,8 @@
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.7",
     "tailwindcss": "^4.3.3",
-    "wrangler": "^4.130.0"
+    "wrangler": "^4.130.0",
+    "zod": "^4.6.5"
   },
   "allowScripts": {
     "esbuild": true

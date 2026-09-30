@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, isNotNull, lte, ne, or, sql, type SQL } from 'drizzle-orm'
 import type { Db } from '../client'
-import { properties, type Property } from '../schema'
+import { properties, type NewProperty, type Property } from '../schema'
 
 /**
  * Consultas de imóveis.
@@ -122,4 +122,91 @@ export async function countByType(db: Db) {
   return Object.fromEntries(rows.map((r) => [r.type, r.total])) as Partial<
     Record<Property['type'], number>
   >
+}
+
+// ---------------------------------------------------------------- painel
+
+/** O painel enxerga inativos também: soft delete não some da gestão. */
+export async function findPropertyById(db: Db, id: number) {
+  const [row] = await db.select().from(properties).where(eq(properties.id, id)).limit(1)
+  return row ?? null
+}
+
+export async function slugExists(db: Db, slug: string, exceptId?: number) {
+  const where = exceptId
+    ? and(eq(properties.slug, slug), ne(properties.id, exceptId))
+    : eq(properties.slug, slug)
+  const [row] = await db.select({ id: properties.id }).from(properties).where(where).limit(1)
+  return Boolean(row)
+}
+
+/** Próximo código sequencial no formato CI-0001. */
+export async function nextPropertyCode(db: Db) {
+  const [row] = await db
+    .select({ maior: sql<string | null>`max(${properties.code})` })
+    .from(properties)
+  const atual = row?.maior?.match(/^CI-(\d+)$/)?.[1]
+  const proximo = atual ? Number(atual) + 1 : 1
+  return `CI-${String(proximo).padStart(4, '0')}`
+}
+
+export async function insertProperty(db: Db, values: NewProperty) {
+  const [row] = await db.insert(properties).values(values).returning()
+  return row!
+}
+
+export async function updatePropertyRow(
+  db: Db,
+  id: number,
+  values: Partial<NewProperty>,
+) {
+  const [row] = await db
+    .update(properties)
+    .set({ ...values, updatedAt: Date.now() })
+    .where(eq(properties.id, id))
+    .returning()
+  return row ?? null
+}
+
+export async function setPropertyStatus(db: Db, id: number, status: Property['status']) {
+  return updatePropertyRow(db, id, { status })
+}
+
+export const ADMIN_PER_PAGE = 15
+
+/** Listagem do painel: busca por título ou código, filtro por situação. */
+export async function searchAdminProperties(
+  db: Db,
+  options: { q?: string; status?: Property['status']; page?: number } = {},
+) {
+  const { q, status } = options
+  const page = Math.max(1, options.page ?? 1)
+
+  const partes: (SQL | undefined)[] = []
+  if (status) partes.push(eq(properties.status, status))
+  if (q) {
+    const termo = `%${q.trim().toLowerCase()}%`
+    partes.push(
+      or(
+        sql`lower(${properties.title}) like ${termo}`,
+        sql`lower(${properties.code}) like ${termo}`,
+        sql`lower(coalesce(${properties.addressNeighborhood}, '')) like ${termo}`,
+      ),
+    )
+  }
+  const where = partes.length ? and(...partes) : undefined
+
+  const [items, [counted]] = await Promise.all([
+    db
+      .select()
+      .from(properties)
+      .where(where)
+      .orderBy(desc(properties.updatedAt))
+      .limit(ADMIN_PER_PAGE)
+      .offset((page - 1) * ADMIN_PER_PAGE),
+    db.select({ total: sql<number>`count(*)` }).from(properties).where(where),
+  ])
+
+  const total = counted?.total ?? 0
+  return { items, total, page, totalPages: Math.max(1, Math.ceil(total / ADMIN_PER_PAGE)) }
 }

@@ -1,0 +1,62 @@
+---
+import { env } from 'cloudflare:workers'
+import PropertyForm from '../../../components/admin/PropertyForm.astro'
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { createDb } from '../../../server/db/client'
+import { createProperty } from '../../../server/services/properties'
+import {
+  parsePropertyForm,
+  toFieldErrors,
+  type FieldErrors,
+} from '../../../server/validation/property'
+
+const user = Astro.locals.user!
+let errors: FieldErrors = {}
+let values: Record<string, unknown> = { addressCity: 'Caruaru', addressState: 'PE', status: 'active' }
+
+/**
+ * O POST é tratado aqui, e não numa rota da API, por um motivo prático: quando
+ * a validação falha o formulário precisa voltar preenchido com o que a pessoa
+ * digitou. Uma API que responde com redirect perderia esses dados, e guardá-los
+ * num cookie estouraria o limite de 4 KB por causa da descrição.
+ */
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData()
+  values = Object.fromEntries(form)
+
+  const parsed = parsePropertyForm(form)
+  if (parsed.success) {
+    const db = createDb(env.DB)
+    const imovel = await createProperty(db, parsed.data, user.id)
+    return Astro.redirect(`/admin/imoveis?criado=${imovel.code}`, 303)
+  }
+
+  errors = toFieldErrors(parsed.error)
+}
+---
+
+<AdminLayout title="Cadastrar imóvel">
+  <header class="mb-8">
+    <a href="/admin/imoveis" class="text-sm text-ink-muted hover:text-ink">← Imóveis</a>
+    <h1 class="mt-2 font-display text-2xl font-semibold text-ink sm:text-3xl">Cadastrar imóvel</h1>
+    <p class="mt-1 text-sm text-ink-muted">
+      O código e o endereço do site são gerados automaticamente ao salvar.
+    </p>
+  </header>
+
+  {
+    Object.keys(errors).length > 0 && (
+      <p role="alert" class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        Confira os campos destacados abaixo.
+      </p>
+    )
+  }
+
+  <PropertyForm
+    action="/admin/imoveis/novo"
+    values={values}
+    errors={errors}
+    submitLabel="Cadastrar imóvel"
+    cancelHref="/admin/imoveis"
+  />
+</AdminLayout>

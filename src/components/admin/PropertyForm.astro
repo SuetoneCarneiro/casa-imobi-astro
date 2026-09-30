@@ -1,0 +1,93 @@
+---
+import Button from '../ui/Button.astro'
+import Checkbox from '../ui/Checkbox.astro'
+import Input from '../ui/Input.astro'
+import Select from '../ui/Select.astro'
+import Textarea from '../ui/Textarea.astro'
+import type { FieldErrors } from '../../server/validation/property'
+
+interface Props {
+  action: string
+  values: Record<string, unknown>
+  errors?: FieldErrors
+  submitLabel: string
+  cancelHref: string
+}
+
+const { action, values, errors = {}, submitLabel, cancelHref } = Astro.props
+
+const v = (campo: string) => {
+  const valor = values[campo]
+  return valor === null || valor === undefined ? '' : String(valor)
+}
+const marcado = (campo: string) => Boolean(values[campo])
+
+const tipos = [
+  { value: 'house', label: 'Casa' },
+  { value: 'apartment', label: 'Apartamento' },
+  { value: 'land', label: 'Terreno' },
+  { value: 'commercial', label: 'Comercial' },
+]
+const categorias = [
+  { value: 'residential', label: 'Residencial' },
+  { value: 'commercial', label: 'Comercial' },
+]
+const situacoes = [
+  { value: 'active', label: 'Ativo (aparece no site)' },
+  { value: 'inactive', label: 'Inativo (fora do ar)' },
+]
+---
+
+<form method="post" action={action} class="flex flex-col gap-10">
+  <fieldset class="flex flex-col gap-5">
+    <legend class="mb-1 font-display text-lg font-semibold text-ink">Identificação</legend>
+    <Input name="title" label="Título do imóvel" required value={v('title')} error={errors.title} hint="Aparece como manchete no site." />
+    <Textarea name="description" label="Descrição" rows={5} value={v('description')} error={errors.description} />
+  </fieldset>
+
+  <fieldset class="grid gap-5 sm:grid-cols-3">
+    <legend class="mb-1 font-display text-lg font-semibold text-ink">Comercial</legend>
+    <Input name="price" label="Preço (R$)" required inputmode="decimal" placeholder="450000,00" value={v('price')} error={errors.price} />
+    <Select name="type" label="Tipo" options={tipos} placeholder="Selecione" value={v('type')} error={errors.type} required />
+    <Select name="category" label="Categoria" options={categorias} value={v('category') || 'residential'} error={errors.category} />
+    <Select name="status" label="Situação" options={situacoes} value={v('status') || 'active'} error={errors.status} class="sm:col-span-2" />
+    <Checkbox name="isCondo" label="Fica em condomínio" checked={marcado('isCondo')} class="sm:col-span-1 sm:self-end sm:pb-3" />
+  </fieldset>
+
+  <fieldset class="grid gap-5 sm:grid-cols-3 lg:grid-cols-5">
+    <legend class="mb-1 font-display text-lg font-semibold text-ink">Características</legend>
+    <Input name="bedrooms" label="Quartos" type="number" min="0" value={v('bedrooms') || '0'} error={errors.bedrooms} />
+    <Input name="suites" label="Suítes" type="number" min="0" value={v('suites') || '0'} error={errors.suites} />
+    <Input name="bathrooms" label="Banheiros" type="number" min="0" value={v('bathrooms') || '0'} error={errors.bathrooms} />
+    <Input name="parkingSpaces" label="Vagas" type="number" min="0" value={v('parkingSpaces') || '0'} error={errors.parkingSpaces} />
+    <Input name="usableArea" label="Área útil (m²)" inputmode="decimal" value={v('usableArea')} error={errors.usableArea} />
+  </fieldset>
+
+  <fieldset class="grid gap-5 sm:grid-cols-6">
+    <legend class="mb-1 font-display text-lg font-semibold text-ink">Endereço</legend>
+    <Input name="addressStreet" label="Rua" class="sm:col-span-4" value={v('addressStreet')} error={errors.addressStreet} />
+    <Input name="addressNumber" label="Número" class="sm:col-span-2" value={v('addressNumber')} error={errors.addressNumber} />
+    <Input name="addressNeighborhood" label="Bairro" class="sm:col-span-3" value={v('addressNeighborhood')} error={errors.addressNeighborhood} />
+    <Input name="addressCity" label="Cidade" class="sm:col-span-2" value={v('addressCity') || 'Caruaru'} error={errors.addressCity} />
+    <Input name="addressState" label="UF" class="sm:col-span-1" maxlength="2" value={v('addressState') || 'PE'} error={errors.addressState} />
+    <Input name="addressZip" label="CEP" class="sm:col-span-2" value={v('addressZip')} error={errors.addressZip} />
+    <Checkbox
+      name="hideAddressNumber"
+      label="Esconder o número no site público"
+      hint="O número continua salvo aqui no painel."
+      checked={marcado('hideAddressNumber')}
+      class="sm:col-span-4 sm:self-end sm:pb-3"
+    />
+  </fieldset>
+
+  <fieldset class="grid gap-5 sm:grid-cols-2">
+    <legend class="mb-1 font-display text-lg font-semibold text-ink">Extras</legend>
+    <Input name="development" label="Empreendimento" value={v('development')} error={errors.development} hint="Nome do condomínio ou residencial, se houver." />
+    <Input name="videoUrl" label="Vídeo no YouTube" type="url" value={v('videoUrl')} error={errors.videoUrl} placeholder="https://youtube.com/watch?v=..." />
+  </fieldset>
+
+  <div class="flex flex-wrap items-center gap-3 border-t border-brand-100 pt-6">
+    <Button type="submit">{submitLabel}</Button>
+    <Button href={cancelHref} variant="ghost">Cancelar</Button>
+  </div>
+</form>
