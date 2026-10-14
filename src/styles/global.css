@@ -40,7 +40,7 @@
   --color-gold-400: #f5c23d;
   --color-gold-500: #d79e0b;  /* logo */
   --color-gold-600: #b68609;
-  --color-gold-700: #946d08;
+  --color-gold-700: #8a6607; /* escurecido: #946d08 dava 4,47:1 sobre o fundo e reprovava */
   --color-gold-800: #725406;
   --color-gold-900: #553e04;
   --color-gold-950: #382903;
@@ -56,7 +56,12 @@
   --color-ink-muted: #71717a; /* legendas, dicas, placeholder */
 
   --color-surface: #faf8fc;
-  --color-whatsapp: #25d366;
+  /*
+   * Verde do WhatsApp escurecido. O #25d366 oficial com texto branco dá
+   * 1,98:1 e reprova em qualquer critério. Este tom mantém a leitura de
+   * "WhatsApp" e dá 4,88:1 com branco.
+   */
+  --color-whatsapp: #17823f;
 
   /*
    * Outfit é geométrica e arredondada como o wordmark do logo — títulos e
