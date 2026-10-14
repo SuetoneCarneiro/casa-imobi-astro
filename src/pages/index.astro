@@ -16,6 +16,7 @@ import {
   listNeighborhoods,
   searchProperties,
 } from '../server/db/queries/properties'
+import { findCovers } from '../server/db/queries/images'
 
 const db = createDb(env.DB)
 
@@ -37,6 +38,12 @@ const acervo = [
 
 // Categoria sem imóvel não vira carrossel vazio, simplesmente não aparece.
 const acervoVisivel = acervo.filter((c) => c.resultado.items.length > 0)
+
+// Uma consulta de capas para todos os carrosséis juntos.
+const capas = await findCovers(
+  db,
+  acervoVisivel.flatMap((c) => c.resultado.items.map((i) => i.id)),
+)
 
 const tipos = (['house', 'apartment', 'land', 'commercial'] as const).map((tipo) => ({
   tipo,
@@ -146,6 +153,7 @@ const faq = [
             title={categoria.title}
             icon={categoria.icon}
             properties={categoria.resultado.items}
+            covers={capas}
             total={categoria.resultado.total}
             href={`/imoveis?tipo=${categoria.tipo}`}
             priority={i === 0}

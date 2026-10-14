@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { auth } from './routes/auth'
 import { health } from './routes/health'
+import { images } from './routes/images'
 
 /**
  * Bindings do Cloudflare disponíveis para a API.
@@ -24,6 +25,7 @@ export const api = new Hono<ApiEnv>().basePath('/api')
 
 api.route('/health', health)
 api.route('/auth', auth)
+api.route('/fotos', images)
 
 api.notFound((c) => c.json({ error: 'Rota não encontrada' }, 404))
 

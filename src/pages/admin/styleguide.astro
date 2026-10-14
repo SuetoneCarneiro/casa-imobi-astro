@@ -1,5 +1,6 @@
 ---
 import PropertyCard from '../../components/site/PropertyCard.astro'
+import PropertyGallery from '../../components/site/PropertyGallery.astro'
 import SearchBar from '../../components/site/SearchBar.astro'
 import Pagination from '../../components/site/Pagination.astro'
 import Badge from '../../components/ui/Badge.astro'
@@ -230,6 +231,28 @@ const icons: IconName[] = [
           confirmLabel="Inativar"
           tone="danger"
         />
+      </div>
+
+      <div>
+        <h3 class="mb-3 text-sm font-semibold">Galeria do imóvel</h3>
+        <p class="mb-3 max-w-prose text-sm text-ink-muted">
+          Mesmo <code class="font-mono">scroll-snap</code> do carrossel da home, sem JavaScript.
+          Abaixo, o estado de imóvel ainda sem foto, que é como todo imóvel nasce.
+        </p>
+        <div class="max-w-xl">
+          <PropertyGallery images={[]} property={exemplo} />
+        </div>
+      </div>
+
+      <div>
+        <h3 class="mb-3 text-sm font-semibold">Envio de fotos</h3>
+        <p class="max-w-prose text-sm text-ink-muted">
+          É a única ilha React do projeto, e vive apenas na edição de um imóvel. Redimensiona no
+          navegador em três variantes (400, 1024 e 1920 px), envia até três em paralelo com barra de
+          progresso, e permite reordenar, definir capa e remover. Não aparece aqui porque depende de
+          um imóvel real: veja em
+          <a href="/admin/imoveis" class="font-medium text-brand-700 underline underline-offset-2">Imóveis</a>.
+        </p>
       </div>
 
       <div>

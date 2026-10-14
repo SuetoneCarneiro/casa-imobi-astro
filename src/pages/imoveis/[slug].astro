@@ -1,5 +1,6 @@
 ---
 import { env } from 'cloudflare:workers'
+import PropertyGallery from '../../components/site/PropertyGallery.astro'
 import PropertyGrid from '../../components/site/PropertyGrid.astro'
 import Badge from '../../components/ui/Badge.astro'
 import Button from '../../components/ui/Button.astro'
@@ -9,13 +10,13 @@ import SiteLayout from '../../layouts/SiteLayout.astro'
 import {
   formatArea,
   formatBRL,
-  PROPERTY_TYPE_ICONS,
   PROPERTY_TYPE_LABELS,
   publicAddress,
 } from '../../lib/format'
 import { site } from '../../lib/site'
 import { createDb } from '../../server/db/client'
 import { findPropertyBySlug, listRelatedProperties } from '../../server/db/queries/properties'
+import { findCovers, listPropertyImages } from '../../server/db/queries/images'
 
 const { slug } = Astro.params
 const db = createDb(env.DB)
@@ -25,7 +26,11 @@ if (!imovel) {
   Astro.response.status = 404
 }
 
-const relacionados = imovel ? await listRelatedProperties(db, imovel, 3) : []
+const [relacionados, fotos] = imovel
+  ? await Promise.all([listRelatedProperties(db, imovel, 3), listPropertyImages(db, imovel.id)])
+  : [[], []]
+
+const capasRelacionados = await findCovers(db, relacionados.map((r) => r.id))
 
 const specs = imovel
   ? ([
@@ -88,10 +93,8 @@ const mensagem = imovel
           {publicAddress(imovel)}, {imovel.addressCity}/{imovel.addressState}
         </p>
 
-        {/* Área de fotos. A galeria real chega na Fase 6, junto com o upload no R2. */}
-        <div class="mt-8 flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 rounded-xl border border-brand-100 bg-brand-50 text-brand-600">
-          <Icon name={PROPERTY_TYPE_ICONS[imovel.type]} size={56} />
-          <span class="text-sm font-medium">Fotos em breve</span>
+        <div class="mt-8">
+          <PropertyGallery images={fotos} property={imovel} />
         </div>
 
         <div class="mt-10 grid gap-10 lg:grid-cols-[1fr_20rem] lg:items-start">
@@ -181,7 +184,7 @@ const mensagem = imovel
         {relacionados.length > 0 && (
           <section class="mt-16 border-t border-brand-100 pt-12">
             <h2 class="font-display text-2xl font-semibold text-ink">Veja também</h2>
-            <PropertyGrid properties={relacionados} class="mt-6" eager={0} />
+            <PropertyGrid properties={relacionados} covers={capasRelacionados} class="mt-6" eager={0} />
           </section>
         )}
       </Container>

@@ -1,0 +1,83 @@
+---
+import type { PropertyImage, Property } from '../../server/db/schema'
+import { imageUrl } from '../../server/services/images'
+import { PROPERTY_TYPE_ICONS } from '../../lib/format'
+import Icon from '../ui/Icon.astro'
+
+interface Props {
+  images: PropertyImage[]
+  property: Property
+}
+
+const { images, property } = Astro.props
+---
+
+{
+  images.length === 0 ? (
+    <div class="flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 rounded-xl border border-brand-100 bg-brand-50 text-brand-600">
+      <Icon name={PROPERTY_TYPE_ICONS[property.type]} size={56} />
+      <span class="text-sm font-medium">Fotos em breve</span>
+    </div>
+  ) : (
+    <figure class="flex flex-col gap-3" data-carousel-root>
+      <div class="relative">
+        {/* Base sem JavaScript: scroll nativo com encaixe, que já serve o toque. */}
+        <ul
+          data-track
+          class="flex snap-x snap-mandatory gap-3 overflow-x-auto rounded-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {images.map((foto, i) => (
+            <li class="w-full shrink-0 snap-start">
+              <img
+                src={imageUrl(foto.storageKey, 'md', foto.format)}
+                alt={foto.alt ?? `${property.title} — foto ${i + 1}`}
+                width={foto.width ?? 1024}
+                height={foto.height ?? 768}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                class="aspect-[16/9] w-full rounded-xl bg-brand-50 object-cover"
+              />
+            </li>
+          ))}
+        </ul>
+
+        {/*
+          As setas existem porque no desktop com mouse não há gesto de arrastar.
+          Nascem com `hidden` e só aparecem se o JavaScript rodar.
+        */}
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              data-scroll="prev"
+              hidden
+              aria-label="Foto anterior"
+              class="absolute top-1/2 left-3 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink shadow-lg backdrop-blur transition hover:bg-white data-[edge=true]:opacity-40"
+            >
+              <Icon name="arrow-right" size={20} class="rotate-180" />
+            </button>
+            <button
+              type="button"
+              data-scroll="next"
+              hidden
+              aria-label="Próxima foto"
+              class="absolute top-1/2 right-3 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink shadow-lg backdrop-blur transition hover:bg-white data-[edge=true]:opacity-40"
+            >
+              <Icon name="arrow-right" size={20} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {images.length > 1 && (
+        <figcaption class="text-center text-xs text-ink-muted">
+          {images.length} fotos. Use as setas ou arraste para o lado.
+        </figcaption>
+      )}
+    </figure>
+  )
+}
+
+<script>
+  import '../../scripts/carousel'
+</script>

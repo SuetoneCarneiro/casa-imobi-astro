@@ -129,8 +129,16 @@ export const propertyImages = sqliteTable(
     propertyId: integer('property_id')
       .notNull()
       .references(() => properties.id, { onDelete: 'cascade' }),
-    /** Prefixo no R2. Os arquivos são {key}/thumb.webp, /md.webp, /full.webp. */
+    /** Prefixo no R2. Os arquivos são {key}/thumb.<format>, /md.<format>, /full.<format>. */
     storageKey: text('storage_key').notNull(),
+    /**
+     * Extensão real dos arquivos. Nem todo navegador codifica WebP no canvas:
+     * alguns ignoram o pedido e devolvem JPEG ou PNG sem avisar. Guardar o que
+     * foi gravado de fato é o que mantém a URL de leitura correta.
+     */
+    format: text('format', { enum: ['webp', 'jpg', 'png'] })
+      .notNull()
+      .default('webp'),
     alt: text('alt'),
     position: integer('position').notNull().default(0),
     isCover: integer('is_cover', { mode: 'boolean' }).notNull().default(false),

@@ -1,0 +1,1 @@
+ALTER TABLE `property_images` ADD `format` text DEFAULT 'webp' NOT NULL;

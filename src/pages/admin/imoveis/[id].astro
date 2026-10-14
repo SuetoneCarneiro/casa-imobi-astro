@@ -1,10 +1,13 @@
 ---
 import { env } from 'cloudflare:workers'
+import PhotoUploader from '../../../components/admin/PhotoUploader'
 import PropertyForm from '../../../components/admin/PropertyForm.astro'
 import Badge from '../../../components/ui/Badge.astro'
 import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { createDb } from '../../../server/db/client'
 import { findPropertyById } from '../../../server/db/queries/properties'
+import { listPropertyImages } from '../../../server/db/queries/images'
+import { imageUrl } from '../../../server/services/images'
 import { updateProperty } from '../../../server/services/properties'
 import {
   parsePropertyForm,
@@ -19,6 +22,15 @@ const imovel = Number.isInteger(id) ? await findPropertyById(db, id) : null
 if (!imovel) {
   return Astro.redirect('/admin/imoveis', 302)
 }
+
+const fotos = (await listPropertyImages(db, imovel.id)).map((f) => ({
+  id: f.id,
+  position: f.position,
+  isCover: f.isCover,
+  alt: f.alt,
+  thumbUrl: imageUrl(f.storageKey, 'thumb', f.format),
+  mdUrl: imageUrl(f.storageKey, 'md', f.format),
+}))
 
 let errors: FieldErrors = {}
 let values: Record<string, unknown> = {
@@ -68,6 +80,14 @@ if (Astro.request.method === 'POST') {
       </p>
     )
   }
+
+  <section class="mb-12">
+    <h2 class="font-display text-lg font-semibold text-ink">Fotos</h2>
+    <p class="mt-1 mb-4 text-sm text-ink-muted">
+      A primeira foto vira a capa automaticamente. O envio é independente do formulário abaixo.
+    </p>
+    <PhotoUploader client:load propertyId={imovel.id} iniciais={fotos} />
+  </section>
 
   <PropertyForm
     action={`/admin/imoveis/${imovel.id}`}

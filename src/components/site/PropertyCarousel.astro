@@ -1,5 +1,6 @@
 ---
 import type { Property } from '../../server/db/schema'
+import { imageUrl } from '../../server/services/images'
 import Button from '../ui/Button.astro'
 import Icon, { type IconName } from '../ui/Icon.astro'
 import PropertyCard from './PropertyCard.astro'
@@ -8,6 +9,8 @@ interface Props {
   title: string
   icon: IconName
   properties: Property[]
+  /** Capas já resolvidas pela página, para não consultar por cartão. */
+  covers?: Map<number, { storageKey: string; format: 'webp' | 'jpg' | 'png' }>
   /** Total de ativos na categoria, para o rótulo do botão. */
   total: number
   /** Destino do "Ver todos", já filtrado. */
@@ -16,10 +19,10 @@ interface Props {
   priority?: boolean
 }
 
-const { title, icon, properties, total, href, priority = false } = Astro.props
+const { title, icon, properties, covers, total, href, priority = false } = Astro.props
 ---
 
-<section class="flex flex-col gap-6">
+<section class="flex flex-col gap-6" data-carousel-root>
   <header class="flex items-end justify-between gap-4">
     <div class="flex items-center gap-3">
       <Icon name={icon} size={26} class="text-brand-600" />
@@ -40,7 +43,7 @@ const { title, icon, properties, total, href, priority = false } = Astro.props
         data-scroll="prev"
         hidden
         aria-label={`Ver ${title.toLowerCase()} anteriores`}
-        class="flex size-10 items-center justify-center rounded-lg border border-brand-200 text-ink-soft transition-colors hover:bg-brand-50 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent"
+        class="flex size-10 items-center justify-center rounded-lg border border-brand-200 text-ink-soft transition-colors hover:bg-brand-50 data-[edge=true]:opacity-35 data-[edge=true]:hover:bg-transparent"
       >
         <Icon name="arrow-right" size={18} class="rotate-180" />
       </button>
@@ -49,14 +52,14 @@ const { title, icon, properties, total, href, priority = false } = Astro.props
         data-scroll="next"
         hidden
         aria-label={`Ver mais ${title.toLowerCase()}`}
-        class="flex size-10 items-center justify-center rounded-lg border border-brand-200 text-ink-soft transition-colors hover:bg-brand-50 disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent"
+        class="flex size-10 items-center justify-center rounded-lg border border-brand-200 text-ink-soft transition-colors hover:bg-brand-50 data-[edge=true]:opacity-35 data-[edge=true]:hover:bg-transparent"
       >
         <Icon name="arrow-right" size={18} />
       </button>
     </div>
   </header>
 
-  <div data-carousel>
+  <div>
     <ul
       data-track
       class="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -64,7 +67,11 @@ const { title, icon, properties, total, href, priority = false } = Astro.props
       {
         properties.map((property, i) => (
           <li class="w-[82%] shrink-0 snap-start sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]">
-            <PropertyCard property={property} priority={priority && i < 3} />
+            <PropertyCard
+              property={property}
+              coverUrl={covers?.get(property.id) ? imageUrl(covers.get(property.id)!.storageKey, 'thumb', covers.get(property.id)!.format) : null}
+              priority={priority && i < 3}
+            />
           </li>
         ))
       }
@@ -80,58 +87,5 @@ const { title, icon, properties, total, href, priority = false } = Astro.props
 </section>
 
 <script>
-  // Melhoria progressiva: liga as setas só quando há JavaScript.
-  document.querySelectorAll<HTMLElement>('[data-carousel]').forEach((carousel) => {
-    const track = carousel.querySelector<HTMLElement>('[data-track]')
-    const controls = carousel.parentElement?.querySelector<HTMLElement>('[data-controls]')
-    if (!track || !controls) return
-
-    const buttons = controls.querySelectorAll<HTMLButtonElement>('[data-scroll]')
-
-    /**
-     * Esconde as setas quando não há o que rolar e desabilita a que já chegou
-     * ao fim. Roda via ResizeObserver porque medir uma vez no carregamento dá
-     * resultado errado: as fontes ainda não assentaram o layout, e o usuário
-     * pode redimensionar a janela depois.
-     */
-    const sync = () => {
-      const max = track.scrollWidth - track.clientWidth
-      const rolavel = max > 8
-      buttons.forEach((button) => {
-        button.hidden = !rolavel
-        button.disabled =
-          button.dataset.scroll === 'next' ? track.scrollLeft >= max - 8 : track.scrollLeft <= 8
-      })
-    }
-
-    // A animação fica só aqui. `scroll-behavior: smooth` no CSS interferia no
-    // scroll programático e também suavizava o arrasto do usuário, que deve
-    // ser direto.
-    const reduzMovimento = window.matchMedia('(prefers-reduced-motion: reduce)')
-
-    buttons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const direction = button.dataset.scroll === 'next' ? 1 : -1
-        track.scrollBy({
-          left: direction * track.clientWidth * 0.9,
-          behavior: reduzMovimento.matches ? 'auto' : 'smooth',
-        })
-      })
-    })
-
-    track.addEventListener('scroll', sync, { passive: true })
-
-    /**
-     * Medir uma vez só dá resultado errado: quando o script roda, o CSS pode
-     * ainda não ter aplicado a largura dos cards, e as fontes mudam o layout
-     * depois. Então o sync é reexecutado em cada momento em que a medida pode
-     * ter mudado.
-     */
-    const observer = new ResizeObserver(sync)
-    observer.observe(track)
-    if (track.firstElementChild) observer.observe(track.firstElementChild)
-
-    window.addEventListener('load', sync)
-    document.fonts?.ready.then(sync)
-  })
+  import '../../scripts/carousel'
 </script>

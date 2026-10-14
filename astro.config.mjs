@@ -4,6 +4,8 @@ import { defineConfig } from 'astro/config'
 import tailwindcss from '@tailwindcss/vite'
 import cloudflare from '@astrojs/cloudflare'
 
+import react from '@astrojs/react';
+
 // https://astro.build/config
 export default defineConfig({
   // O site lê imóveis do D1 a cada request. Páginas que puderem ser estáticas
@@ -17,4 +19,6 @@ export default defineConfig({
   // O adapter v14 roda sobre o @cloudflare/vite-plugin: o `astro dev` executa
   // dentro do workerd com os bindings do wrangler.jsonc já disponíveis.
   adapter: cloudflare(),
+
+  integrations: [react()],
 })

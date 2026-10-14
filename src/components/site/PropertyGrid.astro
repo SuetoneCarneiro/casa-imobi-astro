@@ -1,17 +1,31 @@
 ---
 import type { Property } from '../../server/db/schema'
+import { imageUrl } from '../../server/services/images'
 import PropertyCard from './PropertyCard.astro'
 
 interface Props {
   properties: Property[]
+  /** Capas já resolvidas pela página, para não consultar por cartão. */
+  covers?: Map<number, { storageKey: string; format: 'webp' | 'jpg' | 'png' }>
   /** Quantos cartões carregam a imagem sem lazy, por estarem na primeira dobra. */
   eager?: number
   class?: string
 }
 
-const { properties, eager = 3, class: className = '' } = Astro.props
+const { properties, covers, eager = 3, class: className = '' } = Astro.props
 ---
 
 <div class={`grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ${className}`}>
-  {properties.map((property, i) => <PropertyCard property={property} priority={i < eager} />)}
+  {
+    properties.map((property, i) => {
+      const capa = covers?.get(property.id)
+      return (
+        <PropertyCard
+          property={property}
+          coverUrl={capa ? imageUrl(capa.storageKey, 'thumb', capa.format) : null}
+          priority={i < eager}
+        />
+      )
+    })
+  }
 </div>

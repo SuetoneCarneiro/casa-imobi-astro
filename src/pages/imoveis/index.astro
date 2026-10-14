@@ -12,6 +12,7 @@ import { PROPERTY_TYPE_LABELS } from '../../lib/format'
 import { site } from '../../lib/site'
 import { createDb } from '../../server/db/client'
 import { listNeighborhoods, searchProperties } from '../../server/db/queries/properties'
+import { findCovers } from '../../server/db/queries/images'
 
 const filtros = parseFilters(Astro.url)
 
@@ -22,6 +23,7 @@ const [resultado, bairros] = await Promise.all([
 ])
 
 const { items, total, page, totalPages } = resultado
+const capas = await findCovers(db, items.map((i) => i.id))
 const filtrado = hasAnyFilter(filtros)
 
 // Resumo dos filtros ativos, para o visitante saber o que está vendo.
@@ -82,7 +84,7 @@ const titulo = filtrado ? `Imóveis: ${ativos.join(', ')}` : 'Imóveis à venda 
     {
       items.length > 0 ? (
         <>
-          <PropertyGrid properties={items} />
+          <PropertyGrid properties={items} covers={capas} />
           <div class="mt-12">
             <Pagination url={Astro.url} page={page} totalPages={totalPages} />
           </div>
