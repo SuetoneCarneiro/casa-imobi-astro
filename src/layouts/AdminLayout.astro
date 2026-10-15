@@ -18,7 +18,19 @@ const nav: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin/styleguide', label: 'Guia de estilo', icon: 'check' },
 ]
 
-const ativo = (href: string) => path === href || path.startsWith(`${href}/`)
+/**
+ * Ganha o item MAIS ESPECÍFICO que casa com a URL
+ *
+ * A regra (`path.startsWith(href + '/')`) marcava "Visão geral" em
+ * qualquer rota do painel, porque todas começam com `/admin/`. Comparar pelo
+ * href mais longo resolve sem precisar tratar a raiz como exceção, e continua
+ * valendo quando surgirem subpáginas como /admin/imoveis/novo
+ */
+const hrefAtivo = nav
+  .filter((item) => path === item.href || path.startsWith(`${item.href}/`))
+  .sort((a, b) => b.href.length - a.href.length)[0]?.href
+
+const ativo = (href: string) => href === hrefAtivo
 ---
 
 <Layout title={`${title} — Painel ${site.name}`}>
