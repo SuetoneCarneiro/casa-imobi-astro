@@ -28,3 +28,6 @@ pnpm-debug.log*
 docs/
 # Wrangler local state (D1 local SQLite, etc.)
 .wrangler/
+
+# cobertura de testes
+coverage/
