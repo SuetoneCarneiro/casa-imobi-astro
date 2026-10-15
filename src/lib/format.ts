@@ -30,10 +30,11 @@ export const PROPERTY_TYPE_ICONS = {
   commercial: 'store',
 } as const
 
-/** Endereço como o site público mostra — respeitando hideAddressNumber. */
+/** Endereço como o site público mostra, respeitando hideAddressNumber. */
 export function publicAddress(p: Property): string {
-  const parts = [p.addressStreet]
-  if (p.addressNumber && !p.hideAddressNumber) parts.push(p.addressNumber)
-  const street = parts.filter(Boolean).join(', ')
-  return [street, p.addressNeighborhood].filter(Boolean).join(' — ')
+  // O número só faz sentido acompanhado da rua. Sem ela, vira um número solto.
+  const mostraNumero = Boolean(p.addressStreet && p.addressNumber && !p.hideAddressNumber)
+  const rua = mostraNumero ? `${p.addressStreet}, ${p.addressNumber}` : (p.addressStreet ?? '')
+
+  return [rua, p.addressNeighborhood].filter(Boolean).join(' — ')
 }
