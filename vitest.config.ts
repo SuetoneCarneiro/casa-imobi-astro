@@ -1,5 +1,6 @@
 import { getViteConfig } from 'astro/config'
-import { defineConfig, type UserConfig } from 'vite'
+// defineConfig do vitest, e não do vite: só ele conhece a chave `test`.
+import { defineConfig, type ViteUserConfig } from 'vitest/config'
 
 /**
  * Dois projetos, separados por natureza do que testam:
@@ -60,11 +61,16 @@ const base = getViteConfig({
  * Passar `adapter: undefined` não ajuda: a configuração é lida do disco.
  */
 export default defineConfig(async (env) => {
-  const resolvido = (await (base as unknown as (e: typeof env) => Promise<UserConfig>)(env)) ?? {}
-  const plugins = (resolvido.plugins ?? []).flat(Infinity) as { name?: string }[]
+  // A configuração resolvida do Astro é tipada de forma muito profunda para o
+  // compilador percorrer aqui, e o que precisamos dela é apenas a lista de
+  // plugins. Por isso o acesso é feito sem tipo neste ponto.
+  const resolvido: Record<string, unknown> =
+    (await (base as unknown as (e: unknown) => Promise<Record<string, unknown>>)(env)) ?? {}
+
+  const plugins = ((resolvido.plugins ?? []) as { name?: string }[]).flat(Infinity)
 
   return {
     ...resolvido,
     plugins: plugins.filter((p) => !p?.name?.startsWith('vite-plugin-cloudflare')),
-  }
+  } as ViteUserConfig
 })

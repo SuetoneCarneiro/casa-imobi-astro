@@ -32,6 +32,10 @@ const fotos = (await listPropertyImages(db, imovel.id)).map((f) => ({
   mdUrl: imageUrl(f.storageKey, 'md', f.format),
 }))
 
+// Chega preenchido quando o visitante acabou de cadastrar o imóvel na tela
+// anterior, que redireciona para cá já ancorada na seção de fotos.
+const recemCadastrado = Astro.url.searchParams.get('criado')
+
 let errors: FieldErrors = {}
 let values: Record<string, unknown> = {
   ...imovel,
@@ -81,7 +85,18 @@ if (Astro.request.method === 'POST') {
     )
   }
 
-  <section class="mb-12">
+  {
+    recemCadastrado && (
+      <p
+        role="status"
+        class="mb-8 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+      >
+        Imóvel {recemCadastrado} cadastrado. Agora adicione as fotos abaixo.
+      </p>
+    )
+  }
+
+  <section id="fotos" class="mb-12 scroll-mt-24">
     <h2 class="font-display text-lg font-semibold text-ink">Fotos</h2>
     <p class="mt-1 mb-4 text-sm text-ink-muted">
       A primeira foto vira a capa automaticamente. O envio é independente do formulário abaixo.

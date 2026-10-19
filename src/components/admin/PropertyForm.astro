@@ -86,6 +86,8 @@ const situacoes = [
     <Input name="videoUrl" label="Vídeo no YouTube" type="url" value={v('videoUrl')} error={errors.videoUrl} placeholder="https://youtube.com/watch?v=..." />
   </fieldset>
 
+  <slot name="fotos" />
+
   <div class="flex flex-wrap items-center gap-3 border-t border-brand-100 pt-6">
     <Button type="submit">{submitLabel}</Button>
     <Button href={cancelHref} variant="ghost">Cancelar</Button>

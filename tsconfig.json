@@ -6,7 +6,9 @@
     "./worker-configuration.d.ts"
   ],
   "exclude": [
-    "dist"
+    "coverage",
+    "dist",
+    "tcc"
   ],
   "compilerOptions": {
     "jsx": "react-jsx",

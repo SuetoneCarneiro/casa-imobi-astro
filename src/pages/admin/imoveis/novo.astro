@@ -1,6 +1,7 @@
 ---
 import { env } from 'cloudflare:workers'
 import PropertyForm from '../../../components/admin/PropertyForm.astro'
+import Icon from '../../../components/ui/Icon.astro'
 import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { createDb } from '../../../server/db/client'
 import { createProperty } from '../../../server/services/properties'
@@ -28,7 +29,10 @@ if (Astro.request.method === 'POST') {
   if (parsed.success) {
     const db = createDb(env.DB)
     const imovel = await createProperty(db, parsed.data, user.id)
-    return Astro.redirect(`/admin/imoveis?criado=${imovel.code}`, 303)
+    // Emenda o cadastro no envio das fotos, em vez de voltar para a listagem.
+    // A foto é gravada sob o identificador do imóvel, que só passa a existir
+    // agora, então este é o primeiro momento em que o envio é possível.
+    return Astro.redirect(`/admin/imoveis/${imovel.id}?criado=${imovel.code}#fotos`, 303)
   }
 
   errors = toFieldErrors(parsed.error)
@@ -40,7 +44,8 @@ if (Astro.request.method === 'POST') {
     <a href="/admin/imoveis" class="text-sm text-ink-muted hover:text-ink">← Imóveis</a>
     <h1 class="mt-2 font-display text-2xl font-semibold text-ink sm:text-3xl">Cadastrar imóvel</h1>
     <p class="mt-1 text-sm text-ink-muted">
-      O código e o endereço do site são gerados automaticamente ao salvar.
+      O código e o endereço do site são gerados automaticamente ao salvar. As fotos são
+      enviadas logo em seguida, na tela que abre após o cadastro.
     </p>
   </header>
 
@@ -56,7 +61,21 @@ if (Astro.request.method === 'POST') {
     action="/admin/imoveis/novo"
     values={values}
     errors={errors}
-    submitLabel="Cadastrar imóvel"
+    submitLabel="Cadastrar e adicionar fotos"
     cancelHref="/admin/imoveis"
-  />
+  >
+    <section slot="fotos" class="flex flex-col gap-3">
+      <h2 class="font-display text-lg font-semibold text-ink">Fotos</h2>
+      <div
+        class="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-brand-200 bg-white px-6 py-10 text-center"
+      >
+        <Icon name="home" size={30} class="text-brand-300" />
+        <p class="font-medium text-ink">O envio das fotos abre no próximo passo</p>
+        <p class="max-w-md text-sm text-ink-muted">
+          As fotos ficam guardadas sob o código do imóvel, que é gerado agora. Ao concluir o
+          cadastro, a tela de fotos abre automaticamente para você arrastar as imagens.
+        </p>
+      </div>
+    </section>
+  </PropertyForm>
 </AdminLayout>
