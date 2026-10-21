@@ -10,6 +10,7 @@ import {
   setCover,
 } from '../../db/queries/images'
 import { findPropertyById } from '../../db/queries/properties'
+import { podeEditarImovel } from '../../services/permissions'
 import {
   buildStorageKey,
   deleteAllVariants,
@@ -21,13 +22,23 @@ import {
   type ImageFormat,
 } from '../../services/images'
 import { requireAuth } from '../middleware/auth'
-import type { ApiEnv } from '../index'
+import type { ApiEnvAutenticado } from '../index'
 
 /**
  * Fotos dos imóveis. É aqui que o Hono finalmente ganha um cliente de verdade:
  * a ilha React do painel chama estas rotas com fetch.
  */
-export const images = new Hono<ApiEnv>()
+export const images = new Hono<ApiEnvAutenticado>()
+
+/** Corretor só mexe nas fotos dos imóveis que cadastrou. */
+async function donoDoImovel(
+  user: { id: number; role: 'admin' | 'manager' | 'agent' },
+  db: ReturnType<typeof createDb>,
+  propertyId: number,
+) {
+  const imovel = await findPropertyById(db, propertyId)
+  return Boolean(imovel) && podeEditarImovel(user, imovel!)
+}
 
 images.use('*', requireAuth)
 
@@ -57,7 +68,14 @@ images.get('/imovel/:propertyId', async (c) => {
   const propertyId = Number(c.req.param('propertyId'))
   if (!Number.isInteger(propertyId)) return c.json({ error: 'Imóvel inválido' }, 400)
 
-  const fotos = await listPropertyImages(createDb(c.env.DB), propertyId)
+  const db = createDb(c.env.DB)
+  const imovel = await findPropertyById(db, propertyId)
+  if (!imovel) return c.json({ error: 'Imóvel não encontrado' }, 404)
+  if (!podeEditarImovel(c.get('user'), imovel)) {
+    return c.json({ error: 'Sem permissão sobre este imóvel' }, 403)
+  }
+
+  const fotos = await listPropertyImages(db, propertyId)
   return c.json({ fotos: fotos.map(serializar) })
 })
 
@@ -70,8 +88,10 @@ images.post('/imovel/:propertyId', async (c) => {
   if (!Number.isInteger(propertyId)) return c.json({ error: 'Imóvel inválido' }, 400)
 
   const db = createDb(c.env.DB)
-  if (!(await findPropertyById(db, propertyId))) {
-    return c.json({ error: 'Imóvel não encontrado' }, 404)
+  const imovel = await findPropertyById(db, propertyId)
+  if (!imovel) return c.json({ error: 'Imóvel não encontrado' }, 404)
+  if (!podeEditarImovel(c.get('user'), imovel)) {
+    return c.json({ error: 'Sem permissão sobre este imóvel' }, 403)
   }
 
   const form = await c.req.formData()
@@ -132,6 +152,9 @@ images.post('/:id/capa', async (c) => {
   const db = createDb(c.env.DB)
   const foto = Number.isInteger(id) ? await findImage(db, id) : null
   if (!foto) return c.json({ error: 'Foto não encontrada' }, 404)
+  if (!(await donoDoImovel(c.get('user'), db, foto.propertyId))) {
+    return c.json({ error: 'Sem permissão sobre este imóvel' }, 403)
+  }
 
   await setCover(db, foto.propertyId, foto.id)
   return c.json({ ok: true })
@@ -146,7 +169,12 @@ images.post('/ordem', async (c) => {
     return c.json({ error: 'Ordem inválida' }, 400)
   }
 
-  await reorderImages(createDb(c.env.DB), propertyId, ids)
+  const db = createDb(c.env.DB)
+  if (!(await donoDoImovel(c.get('user'), db, propertyId))) {
+    return c.json({ error: 'Sem permissão sobre este imóvel' }, 403)
+  }
+
+  await reorderImages(db, propertyId, ids)
   return c.json({ ok: true })
 })
 
@@ -155,6 +183,9 @@ images.delete('/:id', async (c) => {
   const db = createDb(c.env.DB)
   const foto = Number.isInteger(id) ? await findImage(db, id) : null
   if (!foto) return c.json({ error: 'Foto não encontrada' }, 404)
+  if (!(await donoDoImovel(c.get('user'), db, foto.propertyId))) {
+    return c.json({ error: 'Sem permissão sobre este imóvel' }, 403)
+  }
 
   // Apaga do R2 antes do banco: sobrar arquivo órfão é pior que sobrar linha.
   await deleteAllVariants(c.env.BUCKET, foto.storageKey, foto.format)

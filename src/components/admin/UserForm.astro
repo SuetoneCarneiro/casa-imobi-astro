@@ -1,0 +1,89 @@
+---
+import Button from '../ui/Button.astro'
+import Checkbox from '../ui/Checkbox.astro'
+import Input from '../ui/Input.astro'
+import Select from '../ui/Select.astro'
+import { PAPEIS } from '../../server/services/permissions'
+import type { ErrosDeUsuario } from '../../server/validation/user'
+
+interface Props {
+  action: string
+  values: Record<string, unknown>
+  errors?: ErrosDeUsuario
+  submitLabel: string
+  /** Na edição a senha é opcional e serve para redefinir. */
+  modo: 'novo' | 'edicao'
+  /** O próprio usuário não pode rebaixar nem desativar a si mesmo. */
+  ehVoceMesmo?: boolean
+}
+
+const { action, values, errors = {}, submitLabel, modo, ehVoceMesmo = false } = Astro.props
+
+const v = (campo: string) => {
+  const valor = values[campo]
+  return valor === null || valor === undefined ? '' : String(valor)
+}
+
+const papeis = PAPEIS.map((p) => ({ value: p.valor, label: `${p.rotulo} — ${p.descricao}` }))
+---
+
+<form method="post" action={action} class="flex max-w-2xl flex-col gap-6">
+  <Input name="name" label="Nome" required value={v('name')} error={errors.name} autocomplete="name" />
+  <Input
+    name="email"
+    label="E-mail"
+    type="email"
+    required
+    value={v('email')}
+    error={errors.email}
+    hint="É com ele que a pessoa entra no painel."
+    autocomplete="email"
+  />
+
+  <Select
+    name="role"
+    label="Papel"
+    options={papeis}
+    placeholder="Selecione"
+    value={v('role')}
+    error={errors.role}
+    required
+    disabled={ehVoceMesmo}
+    hint={ehVoceMesmo ? 'Você não pode alterar o próprio papel.' : undefined}
+  />
+
+  <Input
+    name="senha"
+    label={modo === 'novo' ? 'Senha' : 'Nova senha'}
+    type="password"
+    required={modo === 'novo'}
+    error={errors.senha}
+    autocomplete="new-password"
+    hint={
+      modo === 'novo'
+        ? 'Mínimo de 8 caracteres.'
+        : 'Deixe em branco para manter a senha atual.'
+    }
+  />
+
+  <Checkbox
+    name="active"
+    label="Acesso liberado"
+    hint={
+      ehVoceMesmo
+        ? 'Você não pode desativar o próprio acesso.'
+        : 'Desmarcado, a pessoa deixa de entrar no painel e as sessões abertas param de valer.'
+    }
+    checked={modo === 'novo' ? true : Boolean(values.active)}
+    disabled={ehVoceMesmo}
+  />
+
+  {/* Campos desabilitados não são enviados, então o valor atual vai num campo oculto. */}
+  {ehVoceMesmo && <input type="hidden" name="role" value={v('role')} />}
+  {ehVoceMesmo && <input type="hidden" name="active" value="on" />}
+
+  <div class="flex flex-wrap items-center gap-3 border-t border-brand-100 pt-6">
+    <Button type="submit">{submitLabel}</Button>
+    <Button href="/admin/usuarios" variant="ghost">Cancelar</Button>
+  </div>
+</form>

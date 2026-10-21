@@ -10,6 +10,8 @@ const user = Astro.locals.user!
 const db = createDb(env.DB)
 const [ativos, porTipo] = await Promise.all([countActiveProperties(db), countByType(db)])
 
+const semPermissao = Astro.url.searchParams.has('sem-permissao')
+
 const tipos = (['house', 'apartment', 'land', 'commercial'] as const).map((t) => ({
   label: PROPERTY_TYPE_LABELS[t],
   total: porTipo[t] ?? 0,
@@ -23,6 +25,14 @@ const tipos = (['house', 'apartment', 'land', 'commercial'] as const).map((t) =>
     </h1>
     <p class="mt-1 text-ink-soft">Este é o painel da {`CasaImobi`}.</p>
   </header>
+
+  {
+    semPermissao && (
+      <p role="alert" class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        Seu papel não dá acesso a essa área.
+      </p>
+    )
+  }
 
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
     <div class="rounded-xl border border-brand-100 bg-white p-5">

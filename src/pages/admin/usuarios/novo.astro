@@ -1,0 +1,54 @@
+---
+import { env } from 'cloudflare:workers'
+import UserForm from '../../../components/admin/UserForm.astro'
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { createDb } from '../../../server/db/client'
+import { criarUsuario } from '../../../server/services/users'
+import { errosDeUsuario, parseNovoUsuario, type ErrosDeUsuario } from '../../../server/validation/user'
+
+let errors: ErrosDeUsuario = {}
+let aviso: string | null = null
+let values: Record<string, unknown> = { role: 'agent', active: true }
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData()
+  values = { ...Object.fromEntries(form), active: form.get('active') !== null }
+
+  const parsed = parseNovoUsuario(form)
+  if (parsed.success) {
+    const resultado = await criarUsuario(createDb(env.DB), parsed.data)
+    if (resultado.ok) {
+      return Astro.redirect(`/admin/usuarios?criado=${encodeURIComponent(resultado.user.name)}`, 303)
+    }
+    aviso = resultado.erro
+  } else {
+    errors = errosDeUsuario(parsed.error)
+  }
+}
+---
+
+<AdminLayout title="Novo usuário">
+  <header class="mb-8">
+    <a href="/admin/usuarios" class="text-sm text-ink-muted hover:text-ink">← Usuários</a>
+    <h1 class="mt-2 font-display text-2xl font-semibold text-ink sm:text-3xl">Novo usuário</h1>
+    <p class="mt-1 text-sm text-ink-muted">
+      A pessoa entra no painel com o e-mail e a senha definidos aqui.
+    </p>
+  </header>
+
+  {
+    (aviso || Object.keys(errors).length > 0) && (
+      <p role="alert" class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {aviso ?? 'Confira os campos destacados abaixo.'}
+      </p>
+    )
+  }
+
+  <UserForm
+    action="/admin/usuarios/novo"
+    values={values}
+    errors={errors}
+    submitLabel="Criar usuário"
+    modo="novo"
+  />
+</AdminLayout>

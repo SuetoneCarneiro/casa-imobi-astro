@@ -15,6 +15,15 @@ export type ApiBindings = {
 export type ApiEnv = { Bindings: ApiBindings }
 
 /**
+ * Para rotas que rodam atrás de `requireAuth`: além dos bindings, o contexto
+ * carrega o usuário da sessão.
+ */
+export type ApiEnvAutenticado = {
+  Bindings: ApiBindings
+  Variables: { user: import('../db/schema').User }
+}
+
+/**
  * App Hono da CasaImobi.
  *
  * IMPORTANTE: este arquivo — e tudo sob `src/server/` — não pode importar nada

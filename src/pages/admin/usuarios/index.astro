@@ -1,0 +1,78 @@
+---
+import { env } from 'cloudflare:workers'
+import Badge from '../../../components/ui/Badge.astro'
+import Button from '../../../components/ui/Button.astro'
+import Icon from '../../../components/ui/Icon.astro'
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { createDb } from '../../../server/db/client'
+import { listUsers } from '../../../server/db/queries/users'
+import { rotuloDoPapel } from '../../../server/services/permissions'
+
+const eu = Astro.locals.user!
+const db = createDb(env.DB)
+const usuarios = await listUsers(db)
+
+const criado = Astro.url.searchParams.get('criado')
+const salvo = Astro.url.searchParams.get('salvo')
+---
+
+<AdminLayout title="Usuários">
+  <header class="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="font-display text-2xl font-semibold text-ink sm:text-3xl">Usuários</h1>
+      <p class="mt-1 text-sm text-ink-muted">
+        {usuarios.length} {usuarios.length === 1 ? 'pessoa com acesso' : 'pessoas com acesso'}
+      </p>
+    </div>
+    <Button href="/admin/usuarios/novo">
+      <Icon name="check" size={16} />
+      Novo usuário
+    </Button>
+  </header>
+
+  {
+    (criado || salvo) && (
+      <p role="status" class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        {criado ? `Usuário ${criado} criado.` : `Usuário ${salvo} salvo.`}
+      </p>
+    )
+  }
+
+  <div class="overflow-x-auto rounded-xl border border-brand-100 bg-white">
+    <table class="w-full min-w-[40rem] text-sm">
+      <thead>
+        <tr class="border-b border-brand-100 text-left text-xs tracking-wide text-ink-muted uppercase">
+          <th class="px-4 py-3 font-medium">Nome</th>
+          <th class="px-4 py-3 font-medium">E-mail</th>
+          <th class="px-4 py-3 font-medium">Papel</th>
+          <th class="px-4 py-3 font-medium">Acesso</th>
+          <th class="px-4 py-3" />
+        </tr>
+      </thead>
+      <tbody>
+        {
+          usuarios.map((u) => (
+            <tr class="border-b border-brand-100 last:border-0">
+              <td class="px-4 py-3">
+                <a href={`/admin/usuarios/${u.id}`} class="font-medium text-ink hover:underline">
+                  {u.name}
+                </a>
+                {u.id === eu.id && <span class="ml-2 text-xs text-ink-muted">(você)</span>}
+              </td>
+              <td class="px-4 py-3 break-all text-ink-soft">{u.email}</td>
+              <td class="px-4 py-3 text-ink-soft">{rotuloDoPapel(u.role)}</td>
+              <td class="px-4 py-3">
+                {u.active ? <Badge variant="gold">Liberado</Badge> : <Badge variant="muted">Bloqueado</Badge>}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <Button href={`/admin/usuarios/${u.id}`} variant="secondary" size="sm">
+                  Editar
+                </Button>
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>

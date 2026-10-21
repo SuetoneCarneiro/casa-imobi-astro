@@ -1,0 +1,73 @@
+---
+import { env } from 'cloudflare:workers'
+import UserForm from '../../../components/admin/UserForm.astro'
+import Badge from '../../../components/ui/Badge.astro'
+import AdminLayout from '../../../layouts/AdminLayout.astro'
+import { createDb } from '../../../server/db/client'
+import { findUserById } from '../../../server/db/queries/users'
+import { rotuloDoPapel } from '../../../server/services/permissions'
+import { editarUsuario } from '../../../server/services/users'
+import { errosDeUsuario, parseEdicaoUsuario, type ErrosDeUsuario } from '../../../server/validation/user'
+
+const eu = Astro.locals.user!
+const id = Number(Astro.params.id)
+const db = createDb(env.DB)
+const usuario = Number.isInteger(id) ? await findUserById(db, id) : null
+
+if (!usuario) {
+  return Astro.redirect('/admin/usuarios', 302)
+}
+
+const ehVoceMesmo = usuario.id === eu.id
+
+let errors: ErrosDeUsuario = {}
+let aviso: string | null = null
+let values: Record<string, unknown> = { ...usuario }
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData()
+  values = { ...Object.fromEntries(form), active: form.get('active') !== null }
+
+  const parsed = parseEdicaoUsuario(form)
+  if (parsed.success) {
+    const resultado = await editarUsuario(db, usuario.id, parsed.data, eu)
+    if (resultado.ok) {
+      return Astro.redirect(`/admin/usuarios?salvo=${encodeURIComponent(resultado.user.name)}`, 303)
+    }
+    aviso = resultado.erro
+  } else {
+    errors = errosDeUsuario(parsed.error)
+  }
+}
+---
+
+<AdminLayout title={usuario.name}>
+  <header class="mb-8">
+    <a href="/admin/usuarios" class="text-sm text-ink-muted hover:text-ink">← Usuários</a>
+    <div class="mt-2 flex flex-wrap items-center gap-3">
+      <h1 class="font-display text-2xl font-semibold text-ink sm:text-3xl">{usuario.name}</h1>
+      {usuario.active ? <Badge variant="gold">Liberado</Badge> : <Badge variant="muted">Bloqueado</Badge>}
+    </div>
+    <p class="mt-1 text-sm text-ink-muted">
+      {rotuloDoPapel(usuario.role)}
+      {ehVoceMesmo && ' · esta é a sua conta'}
+    </p>
+  </header>
+
+  {
+    (aviso || Object.keys(errors).length > 0) && (
+      <p role="alert" class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {aviso ?? 'Confira os campos destacados abaixo.'}
+      </p>
+    )
+  }
+
+  <UserForm
+    action={`/admin/usuarios/${usuario.id}`}
+    values={values}
+    errors={errors}
+    submitLabel="Salvar alterações"
+    modo="edicao"
+    ehVoceMesmo={ehVoceMesmo}
+  />
+</AdminLayout>

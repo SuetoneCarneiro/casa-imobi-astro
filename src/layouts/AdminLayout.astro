@@ -1,6 +1,7 @@
 ---
 import Icon, { type IconName } from '../components/ui/Icon.astro'
 import { site } from '../lib/site'
+import { podeGerenciarUsuarios, podeVerGuiaDeEstilo, rotuloDoPapel } from '../server/services/permissions'
 import Layout from './Layout.astro'
 
 interface Props {
@@ -12,10 +13,14 @@ const { title } = Astro.props
 const user = Astro.locals.user!
 const path = Astro.url.pathname
 
+// O menu mostra apenas o que o papel do usuário alcança. Esconder o item não
+// é a proteção: quem garante o acesso é o middleware. Isto evita que a pessoa
+// clique em algo que vai recusá-la.
 const nav: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin', label: 'Visão geral', icon: 'home' },
   { href: '/admin/imoveis', label: 'Imóveis', icon: 'building' },
-  { href: '/admin/styleguide', label: 'Guia de estilo', icon: 'check' },
+  ...(podeGerenciarUsuarios(user) ? [{ href: '/admin/usuarios', label: 'Usuários', icon: 'check' as IconName }] : []),
+  ...(podeVerGuiaDeEstilo(user) ? [{ href: '/admin/styleguide', label: 'Guia de estilo', icon: 'check' as IconName }] : []),
 ]
 
 /**
@@ -45,7 +50,10 @@ const ativo = (href: string) => href === hrefAtivo
         </div>
 
         <div class="flex items-center gap-4">
-          <span class="hidden text-sm text-ink-soft sm:inline">{user.name}</span>
+          <span class="hidden text-right text-sm text-ink-soft sm:block">
+            {user.name}
+            <span class="block text-xs text-ink-muted">{rotuloDoPapel(user.role)}</span>
+          </span>
           <!-- Logout é POST: sair não pode acontecer por link pré-carregado. -->
           <form method="post" action="/api/auth/logout">
             <button

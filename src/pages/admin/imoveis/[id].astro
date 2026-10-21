@@ -7,6 +7,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { createDb } from '../../../server/db/client'
 import { findPropertyById } from '../../../server/db/queries/properties'
 import { listPropertyImages } from '../../../server/db/queries/images'
+import { podeEditarImovel } from '../../../server/services/permissions'
 import { imageUrl } from '../../../server/services/images'
 import { updateProperty } from '../../../server/services/properties'
 import {
@@ -21,6 +22,11 @@ const imovel = Number.isInteger(id) ? await findPropertyById(db, id) : null
 
 if (!imovel) {
   return Astro.redirect('/admin/imoveis', 302)
+}
+
+// Corretor só abre o que cadastrou. Vale para GET e para POST.
+if (!podeEditarImovel(Astro.locals.user!, imovel)) {
+  return Astro.redirect('/admin/imoveis?sem-permissao=1', 302)
 }
 
 const fotos = (await listPropertyImages(db, imovel.id)).map((f) => ({

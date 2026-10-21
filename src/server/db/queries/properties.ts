@@ -177,12 +177,19 @@ export const ADMIN_PER_PAGE = 15
 /** Listagem do painel: busca por título ou código, filtro por situação. */
 export async function searchAdminProperties(
   db: Db,
-  options: { q?: string; status?: Property['status']; page?: number } = {},
+  options: {
+    q?: string
+    status?: Property['status']
+    page?: number
+    /** Corretor enxerga apenas o que cadastrou. */
+    createdBy?: number
+  } = {},
 ) {
-  const { q, status } = options
+  const { q, status, createdBy } = options
   const page = Math.max(1, options.page ?? 1)
 
   const partes: (SQL | undefined)[] = []
+  if (createdBy) partes.push(eq(properties.createdBy, createdBy))
   if (status) partes.push(eq(properties.status, status))
   if (q) {
     const termo = `%${q.trim().toLowerCase()}%`

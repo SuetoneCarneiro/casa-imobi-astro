@@ -3,6 +3,16 @@ import { env } from 'cloudflare:workers'
 import { createDb } from './server/db/client'
 import { findSessionUser } from './server/db/queries/sessions'
 import { SESSION_COOKIE } from './server/services/session'
+import type { Papel } from './server/services/permissions'
+
+/**
+ * Trechos do painel restritos por papel. Mantidos aqui, e não espalhados pelas
+ * páginas, para que a regra de acesso de uma rota não divirja da outra.
+ */
+const ROTAS_RESTRITAS: { prefixo: string; papeis: Papel[] }[] = [
+  { prefixo: '/admin/usuarios', papeis: ['admin'] },
+  { prefixo: '/admin/styleguide', papeis: ['admin'] },
+]
 
 /**
  * Guarda do painel.
@@ -34,6 +44,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (ehLogin && context.locals.user) {
     return context.redirect('/admin', 302)
+  }
+
+  const restricao = ROTAS_RESTRITAS.find((r) => pathname.startsWith(r.prefixo))
+  if (restricao && context.locals.user && !restricao.papeis.includes(context.locals.user.role)) {
+    return context.redirect('/admin?sem-permissao=1', 302)
   }
 
   return next()

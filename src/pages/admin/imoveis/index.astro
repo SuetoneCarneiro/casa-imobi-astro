@@ -8,9 +8,14 @@ import Icon from '../../../components/ui/Icon.astro'
 import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { formatBRL, PROPERTY_TYPE_LABELS } from '../../../lib/format'
 import { createDb } from '../../../server/db/client'
-import { searchAdminProperties, setPropertyStatus } from '../../../server/db/queries/properties'
+import { findPropertyById, searchAdminProperties, setPropertyStatus } from '../../../server/db/queries/properties'
+import { limitadoAosPropriosImoveis, podeEditarImovel } from '../../../server/services/permissions'
 
+const eu = Astro.locals.user!
 const db = createDb(env.DB)
+
+// Corretor enxerga e altera apenas o próprio acervo.
+const escopo = limitadoAosPropriosImoveis(eu) ? { createdBy: eu.id } : {}
 
 // Alternar situação é POST daqui mesmo, e responde com redirect para o
 // refresh do navegador não reenviar o formulário.
@@ -20,7 +25,11 @@ if (Astro.request.method === 'POST') {
   const status = String(form.get('status'))
 
   if (Number.isInteger(id) && (status === 'active' || status === 'inactive')) {
-    await setPropertyStatus(db, id, status)
+    // Repete a checagem no POST: esconder o botão na tela não é proteção.
+    const alvo = await findPropertyById(db, id)
+    if (alvo && podeEditarImovel(eu, alvo)) {
+      await setPropertyStatus(db, id, status)
+    }
   }
   return Astro.redirect(`/admin/imoveis${Astro.url.search}`, 303)
 }
@@ -29,17 +38,21 @@ const q = Astro.url.searchParams.get('q')?.trim() || undefined
 const statusFiltro = Astro.url.searchParams.get('situacao')
 const status = statusFiltro === 'active' || statusFiltro === 'inactive' ? statusFiltro : undefined
 const page = Number(Astro.url.searchParams.get('pagina')) || 1
+const semPermissao = Astro.url.searchParams.has('sem-permissao')
 const criado = Astro.url.searchParams.get('criado')
 const salvo = Astro.url.searchParams.get('salvo')
 
-const { items, total, totalPages } = await searchAdminProperties(db, { q, status, page })
+const { items, total, totalPages } = await searchAdminProperties(db, { q, status, page, ...escopo })
 ---
 
 <AdminLayout title="Imóveis">
   <header class="mb-6 flex flex-wrap items-center justify-between gap-4">
     <div>
       <h1 class="font-display text-2xl font-semibold text-ink sm:text-3xl">Imóveis</h1>
-      <p class="mt-1 text-sm text-ink-muted">{total} {total === 1 ? 'registro' : 'registros'}</p>
+      <p class="mt-1 text-sm text-ink-muted">
+        {total} {total === 1 ? 'registro' : 'registros'}
+        {limitadoAosPropriosImoveis(eu) && (total === 1 ? ' cadastrado por você' : ' cadastrados por você')}
+      </p>
     </div>
     <Button href="/admin/imoveis/novo">
       <Icon name="check" size={16} />
@@ -51,6 +64,14 @@ const { items, total, totalPages } = await searchAdminProperties(db, { q, status
     (criado || salvo) && (
       <p role="status" class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
         {criado ? `Imóvel ${criado} cadastrado.` : `Imóvel ${salvo} salvo.`}
+      </p>
+    )
+  }
+
+  {
+    semPermissao && (
+      <p role="alert" class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        Esse imóvel foi cadastrado por outra pessoa e não está sob sua gestão.
       </p>
     )
   }
