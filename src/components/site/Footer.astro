@@ -97,9 +97,13 @@ const socials = [
   </Container>
 
   <div class="border-t border-white/10">
-    <Container class="flex flex-col gap-2 py-6 text-xs text-white/50 sm:flex-row sm:justify-between">
+    <Container class="flex flex-col gap-2 py-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
       <p>© {year} {site.legalName}. Todos os direitos reservados.</p>
-      <p>CRECI {site.creci}</p>
+      <div class="flex items-center gap-3">
+        <span>CRECI {site.creci}</span>
+        <span aria-hidden="true" class="text-white/25">|</span>
+        <a href="/admin" class="hover:text-gold-400">Área de Gestor</a>
+      </div>
     </Container>
   </div>
 </footer>
