@@ -22,6 +22,33 @@ export type NovoUsuario = z.infer<typeof novoUsuarioSchema>
 export type EdicaoUsuario = z.infer<typeof edicaoUsuarioSchema>
 export type ErrosDeUsuario = Partial<Record<keyof NovoUsuario, string>>
 
+/**
+ * Troca de senha pela própria pessoa. Pede a senha atual porque sessão aberta
+ * não é prova de identidade: basta um computador destravado para alguém trocar
+ * a senha de outro e tomar a conta.
+ */
+export const trocaDeSenhaSchema = z
+  .object({
+    atual: z.string().min(1, 'Informe a senha atual.'),
+    nova: senha,
+    confirmacao: z.string(),
+  })
+  .refine((d) => d.nova === d.confirmacao, {
+    message: 'A confirmação não confere com a nova senha.',
+    path: ['confirmacao'],
+  })
+
+export type TrocaDeSenha = z.infer<typeof trocaDeSenhaSchema>
+export type ErrosDeTroca = Partial<Record<keyof TrocaDeSenha, string>>
+
+export function parseTrocaDeSenha(form: FormData) {
+  return trocaDeSenhaSchema.safeParse({
+    atual: String(form.get('atual') ?? ''),
+    nova: String(form.get('nova') ?? ''),
+    confirmacao: String(form.get('confirmacao') ?? ''),
+  })
+}
+
 function texto(form: FormData, campo: string) {
   return String(form.get(campo) ?? '').trim()
 }
@@ -46,11 +73,15 @@ export function parseEdicaoUsuario(form: FormData) {
   return edicaoUsuarioSchema.safeParse(camposDoForm(form))
 }
 
-export function errosDeUsuario(error: z.ZodError): ErrosDeUsuario {
-  const saida: ErrosDeUsuario = {}
+/** Primeira mensagem de cada campo. A segunda só repetiria o mesmo problema. */
+export function primeirosErros<C extends string>(error: z.ZodError): Partial<Record<C, string>> {
+  const saida: Partial<Record<C, string>> = {}
   for (const issue of error.issues) {
-    const campo = issue.path[0] as keyof NovoUsuario | undefined
+    const campo = issue.path[0] as C | undefined
     if (campo && !saida[campo]) saida[campo] = issue.message
   }
   return saida
 }
+
+export const errosDeUsuario = (error: z.ZodError) => primeirosErros<keyof NovoUsuario>(error)
+export const errosDeTroca = (error: z.ZodError) => primeirosErros<keyof TrocaDeSenha>(error)

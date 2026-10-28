@@ -1,0 +1,94 @@
+---
+import { env } from 'cloudflare:workers'
+import Button from '../../components/ui/Button.astro'
+import Input from '../../components/ui/Input.astro'
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import { createDb } from '../../server/db/client'
+import { rotuloDoPapel } from '../../server/services/permissions'
+import { SESSION_COOKIE } from '../../server/services/session'
+import { trocarSenhaPropria } from '../../server/services/users'
+import { errosDeTroca, parseTrocaDeSenha, type ErrosDeTroca } from '../../server/validation/user'
+
+const user = Astro.locals.user!
+
+let errors: ErrosDeTroca = {}
+let trocada = Astro.url.searchParams.has('senha-trocada')
+
+if (Astro.request.method === 'POST') {
+  const parsed = parseTrocaDeSenha(await Astro.request.formData())
+
+  if (parsed.success) {
+    // O middleware já validou este cookie para chegar até aqui.
+    const sessaoAtual = Astro.cookies.get(SESSION_COOKIE)!.value
+    const resultado = await trocarSenhaPropria(createDb(env.DB), user, parsed.data, sessaoAtual)
+
+    if (resultado.ok) {
+      // Redireciona em vez de responder direto: assim recarregar a página não
+      // reenvia o formulário com a senha dentro.
+      return Astro.redirect('/admin/conta?senha-trocada=1', 303)
+    }
+    errors = { [resultado.campo]: resultado.erro }
+  } else {
+    errors = errosDeTroca(parsed.error)
+  }
+}
+---
+
+<AdminLayout title="Minha conta">
+  <header class="mb-8">
+    <h1 class="font-display text-2xl font-semibold text-ink sm:text-3xl">Minha conta</h1>
+    <p class="mt-1 text-sm text-ink-muted">
+      {user.name} · {user.email} · {rotuloDoPapel(user.role)}
+    </p>
+  </header>
+
+  {
+    trocada && (
+      <p
+        role="status"
+        class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+      >
+        Senha alterada. As sessões abertas em outros aparelhos foram encerradas.
+      </p>
+    )
+  }
+
+  <section class="max-w-lg rounded-xl border border-brand-100 bg-white p-6 shadow-sm">
+    <h2 class="font-display text-lg font-semibold text-ink">Trocar a senha</h2>
+    <p class="mt-1 text-sm text-ink-muted">
+      Pedimos a senha atual para garantir que é você, e não alguém que encontrou
+      este computador destravado.
+    </p>
+
+    <form method="post" class="mt-6 flex flex-col gap-5">
+      <Input
+        name="atual"
+        label="Senha atual"
+        type="password"
+        required
+        error={errors.atual}
+        autocomplete="current-password"
+      />
+      <Input
+        name="nova"
+        label="Nova senha"
+        type="password"
+        required
+        error={errors.nova}
+        hint="Mínimo de 8 caracteres."
+        autocomplete="new-password"
+      />
+      <Input
+        name="confirmacao"
+        label="Repita a nova senha"
+        type="password"
+        required
+        error={errors.confirmacao}
+        autocomplete="new-password"
+      />
+      <div class="border-t border-brand-100 pt-5">
+        <Button type="submit">Trocar senha</Button>
+      </div>
+    </form>
+  </section>
+</AdminLayout>

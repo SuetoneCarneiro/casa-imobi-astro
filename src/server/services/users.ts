@@ -1,8 +1,9 @@
 import type { Db } from '../db/client'
 import { countOtherActiveAdmins, createUser, findUserById, updateUser } from '../db/queries/users'
+import { deleteOtherSessions } from '../db/queries/sessions'
 import type { User } from '../db/schema'
-import { hashPassword } from './password'
-import type { EdicaoUsuario, NovoUsuario } from '../validation/user'
+import { hashPassword, verifyPassword } from './password'
+import type { EdicaoUsuario, NovoUsuario, TrocaDeSenha } from '../validation/user'
 
 export type ResultadoUsuario = { ok: true; user: User } | { ok: false; erro: string }
 
@@ -57,4 +58,32 @@ export async function editarUsuario(
 
   if (!user) return { ok: false, erro: 'Não foi possível salvar. O e-mail já pode estar em uso.' }
   return { ok: true, user }
+}
+
+export type ResultadoTroca = { ok: true } | { ok: false; erro: string; campo: keyof TrocaDeSenha }
+
+/**
+ * Troca a senha da própria pessoa.
+ *
+ * Separado de `editarUsuario` de propósito: lá quem age é um administrador
+ * sobre a conta de outro, e exigir a senha atual não faria sentido. Aqui quem
+ * age é o dono da conta, e a senha atual é o que prova que é ele.
+ */
+export async function trocarSenhaPropria(
+  db: Db,
+  user: Pick<User, 'id' | 'passwordHash'>,
+  dados: TrocaDeSenha,
+  sessaoAtual: string,
+): Promise<ResultadoTroca> {
+  if (!(await verifyPassword(dados.atual, user.passwordHash))) {
+    return { ok: false, erro: 'A senha atual não confere.', campo: 'atual' }
+  }
+
+  if (await verifyPassword(dados.nova, user.passwordHash)) {
+    return { ok: false, erro: 'A nova senha precisa ser diferente da atual.', campo: 'nova' }
+  }
+
+  await updateUser(db, user.id, { passwordHash: await hashPassword(dados.nova) })
+  await deleteOtherSessions(db, user.id, sessaoAtual)
+  return { ok: true }
 }

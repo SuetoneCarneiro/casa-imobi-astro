@@ -1,4 +1,4 @@
-import { eq, lt } from 'drizzle-orm'
+import { and, eq, lt, ne } from 'drizzle-orm'
 import type { Db } from '../client'
 import { sessions, users } from '../schema'
 
@@ -42,6 +42,18 @@ export async function findSessionUser(db: Db, sessionId: string) {
 
 export async function deleteSession(db: Db, sessionId: string) {
   await db.delete(sessions).where(eq(sessions.id, sessionId))
+}
+
+/**
+ * Derruba todas as sessões do usuário menos a informada.
+ *
+ * Trocar a senha costuma ser reação a suspeita de acesso indevido, então deixar
+ * as outras sessões vivas esvaziaria o gesto: quem já estava dentro continuaria
+ * dentro. A sessão atual sobrevive para a pessoa não ser expulsa do próprio
+ * navegador logo depois de acertar a senha.
+ */
+export async function deleteOtherSessions(db: Db, userId: number, manter: string) {
+  await db.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.id, manter)))
 }
 
 export async function deleteExpiredSessions(db: Db) {

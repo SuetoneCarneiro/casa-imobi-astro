@@ -6,7 +6,7 @@
 export type IconName =
   | 'bed' | 'bath' | 'car' | 'area' | 'home' | 'building' | 'land' | 'store'
   | 'whatsapp' | 'instagram' | 'facebook' | 'youtube'
-  | 'phone' | 'mail' | 'pin' | 'search' | 'menu' | 'close' | 'arrow-right' | 'check'
+  | 'phone' | 'mail' | 'pin' | 'search' | 'menu' | 'close' | 'arrow-right' | 'check' | 'user'
 
 interface Props {
   name: IconName
@@ -33,6 +33,7 @@ const stroke: Partial<Record<IconName, string>> = {
   close: 'M6 6l12 12M18 6 6 18',
   'arrow-right': 'M4 12h15M13 6l6 6-6 6',
   check: 'M4.5 12.5 9 17 19.5 6.5',
+  user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20.5a7.5 7.5 0 0 1 15 0',
 }
 
 const filled: Partial<Record<IconName, string>> = {
