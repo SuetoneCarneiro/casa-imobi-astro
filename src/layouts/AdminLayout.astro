@@ -19,8 +19,8 @@ const path = Astro.url.pathname
 const nav: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin', label: 'Visão geral', icon: 'home' },
   { href: '/admin/imoveis', label: 'Imóveis', icon: 'building' },
-  ...(podeGerenciarUsuarios(user) ? [{ href: '/admin/usuarios', label: 'Usuários', icon: 'check' as IconName }] : []),
-  ...(podeVerGuiaDeEstilo(user) ? [{ href: '/admin/styleguide', label: 'Guia de estilo', icon: 'check' as IconName }] : []),
+  ...(podeGerenciarUsuarios(user) ? [{ href: '/admin/usuarios', label: 'Usuários', icon: 'users' as IconName }] : []),
+  ...(podeVerGuiaDeEstilo(user) ? [{ href: '/admin/styleguide', label: 'Guia de estilo', icon: 'palette' as IconName }] : []),
   // Sem condição: trocar a própria senha é de todo mundo, inclusive do corretor.
   { href: '/admin/conta', label: 'Minha conta', icon: 'user' },
 ]

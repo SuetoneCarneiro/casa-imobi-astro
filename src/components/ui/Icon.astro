@@ -6,7 +6,8 @@
 export type IconName =
   | 'bed' | 'bath' | 'car' | 'area' | 'home' | 'building' | 'land' | 'store'
   | 'whatsapp' | 'instagram' | 'facebook' | 'youtube'
-  | 'phone' | 'mail' | 'pin' | 'search' | 'menu' | 'close' | 'arrow-right' | 'check' | 'user'
+  | 'phone' | 'mail' | 'pin' | 'search' | 'menu' | 'close' | 'arrow-right' | 'check'
+  | 'user' | 'users' | 'palette' | 'plus'
 
 interface Props {
   name: IconName
@@ -34,6 +35,17 @@ const stroke: Partial<Record<IconName, string>> = {
   'arrow-right': 'M4 12h15M13 6l6 6-6 6',
   check: 'M4.5 12.5 9 17 19.5 6.5',
   user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20.5a7.5 7.5 0 0 1 15 0',
+  // A segunda pessoa entra pela metade, atrás da primeira: é o que diferencia
+  // 'Usuários' de 'Minha conta' num ícone de 17px. Ombros em linha reta, e não
+  // em arco como no ícone de uma pessoa só, porque dois arcos largos lado a
+  // lado se lêem como traços soltos nesse tamanho.
+  users:
+    'M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM15.5 20v-1.8a4.5 4.5 0 0 0-4.5-4.5H7a4.5 4.5 0 0 0-4.5 4.5V20M16 4.7a3.5 3.5 0 0 1 0 6.6M18.1 13.9a4.5 4.5 0 0 1 3.4 4.3V20',
+  // As tintas são círculos minúsculos, não segmentos de comprimento zero: o
+  // Chrome não desenha estes últimos mesmo com stroke-linecap="round".
+  palette:
+    'M12 2.5a9.5 9.5 0 0 0 0 19c.9 0 1.6-.7 1.6-1.6 0-.4-.15-.8-.42-1.07a1.6 1.6 0 0 1 1.12-2.73h1.9a5.3 5.3 0 0 0 5.3-5.3c0-5.2-4.3-8.3-9.5-8.3ZM7.8 11.9a.8.8 0 1 0 1.6 0 .8.8 0 1 0-1.6 0ZM8.6 7.6a.8.8 0 1 0 1.6 0 .8.8 0 1 0-1.6 0ZM13.4 7a.8.8 0 1 0 1.6 0 .8.8 0 1 0-1.6 0Z',
+  plus: 'M12 5v14M5 12h14',
 }
 
 const filled: Partial<Record<IconName, string>> = {
