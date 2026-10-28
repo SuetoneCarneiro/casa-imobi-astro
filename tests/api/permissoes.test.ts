@@ -4,6 +4,7 @@ import {
   podeEditarImovel,
   podeGerenciarUsuarios,
   podeVerGuiaDeEstilo,
+  resolverPapelDoScript,
   rotuloDoPapel,
 } from '../../src/server/services/permissions'
 
@@ -55,5 +56,25 @@ describe('rótulos', () => {
   it('traduz o papel para a interface', () => {
     expect(rotuloDoPapel('admin')).toBe('Administrador')
     expect(rotuloDoPapel('agent')).toBe('Corretor')
+  })
+})
+
+describe('resolverPapelDoScript', () => {
+  /**
+   * O bug que motivou a função: o script gravava 'admin' fixo, então usá-lo
+   * para redefinir a senha de um corretor o promovia sem avisar ninguém.
+   */
+  it.each(['agent', 'manager', 'admin'] as const)(
+    'preserva o papel %s de quem já existe',
+    (atual) => expect(resolverPapelDoScript(undefined, atual)).toBe(atual),
+  )
+
+  it('cria o primeiro usuário como admin, que é a razão de o script existir', () => {
+    expect(resolverPapelDoScript(undefined, undefined)).toBe('admin')
+  })
+
+  it('só muda o papel quando ele é pedido por escrito', () => {
+    expect(resolverPapelDoScript('admin', 'agent')).toBe('admin')
+    expect(resolverPapelDoScript('agent', 'admin')).toBe('agent')
   })
 })

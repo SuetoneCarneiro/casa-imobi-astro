@@ -44,3 +44,21 @@ export function podeEditarImovel(
   if (!limitadoAosPropriosImoveis(user)) return true
   return imovel.createdBy === user.id
 }
+
+/**
+ * Qual papel um usuário deve ter depois do script de linha de comando.
+ *
+ * A regra que faltava: redefinir a senha de alguém NÃO altera o papel dele.
+ * Antes o script gravava `role = 'admin'` fixo, então socorrer um corretor que
+ * esqueceu a senha o promovia a administrador em silêncio, com acesso a todo o
+ * acervo e à gestão de contas. Promover passou a exigir `--papel`, por escrito.
+ *
+ * Usuário novo nasce admin porque o script existe justamente para criar o
+ * primeiro acesso, quando ainda não há ninguém capaz de usar o painel.
+ */
+export function resolverPapelDoScript(
+  papelPedido: Papel | undefined,
+  papelAtual: Papel | undefined,
+): Papel {
+  return papelPedido ?? papelAtual ?? 'admin'
+}
