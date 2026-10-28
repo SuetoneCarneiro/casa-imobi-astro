@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { carregarBitmap, ehImagemAceita, pareceHeic } from '../../lib/imagens'
 
 type Foto = {
   id: number
@@ -22,6 +23,15 @@ const QUALIDADE = { thumb: 0.78, md: 0.82, full: 0.84 } as const
 const SIMULTANEOS = 3
 const TAMANHO_MAX = 25 * 1024 * 1024
 
+/**
+ * Decodifica o arquivo para um bitmap.
+ *
+ * A tentativa nativa vem primeiro de propósito: o Safari decodifica HEIC pelo
+ * próprio sistema, e JPEG e PNG funcionam em todo lugar. Só quando o navegador
+ * falha E o arquivo parece HEIC é que o decodificador é carregado, porque ele
+ * leva o libheif junto e pesa alguns megabytes. Assim o envio comum, de fotos
+ * vindas do WhatsApp, não paga nada por esse recurso.
+ */
 function paraBlob(canvas: HTMLCanvasElement, tipo: string, qualidade: number) {
   return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, tipo, qualidade))
 }
@@ -47,7 +57,7 @@ async function codificar(canvas: HTMLCanvasElement, qualidade: number) {
  * Worker. O servidor só recebe imagem já pronta e guarda.
  */
 async function gerarVariantes(file: File) {
-  const bitmap = await createImageBitmap(file)
+  const bitmap = await carregarBitmap(file)
   const { width, height } = bitmap
 
   const variantes = await Promise.all(
@@ -116,14 +126,28 @@ export default function PhotoUploader({
   const enviarUm = useCallback(
     async (file: File) => {
       const localId = crypto.randomUUID()
-      const preview = URL.createObjectURL(file)
-      setPendentes((p) => [...p, { localId, nome: file.name, preview, progresso: 0 }])
+      // Pode ser trocada adiante, no caso do HEIC, e é esta variável que
+      // precisa ser liberada no fim.
+      let urlPrevia = URL.createObjectURL(file)
+      setPendentes((p) => [...p, { localId, nome: file.name, preview: urlPrevia, progresso: 0 }])
 
       const marcarErro = (erro: string) =>
         setPendentes((p) => p.map((i) => (i.localId === localId ? { ...i, erro } : i)))
 
       try {
         const { width, height, variantes } = await gerarVariantes(file)
+
+        // O navegador que não decodifica HEIC também não exibe a prévia do
+        // arquivo original. A miniatura recém-gerada já está em formato que ele
+        // entende, então substitui a prévia.
+        if (pareceHeic(file) && variantes.thumb) {
+          const convertida = URL.createObjectURL(variantes.thumb)
+          setPendentes((p) =>
+            p.map((i) => (i.localId === localId ? { ...i, preview: convertida } : i)),
+          )
+          URL.revokeObjectURL(urlPrevia)
+          urlPrevia = convertida
+        }
 
         const form = new FormData()
         form.append('width', String(width))
@@ -150,11 +174,11 @@ export default function PhotoUploader({
         const nova = (resposta.body as { foto: Foto }).foto
         setFotos((f) => [...f, nova])
         setPendentes((p) => p.filter((i) => i.localId !== localId))
-        URL.revokeObjectURL(preview)
+        URL.revokeObjectURL(urlPrevia)
       } catch (e) {
         marcarErro(
-          e instanceof Error && e.message.includes('decode')
-            ? 'Formato não suportado pelo navegador (HEIC do iPhone, por exemplo).'
+          pareceHeic(file)
+            ? 'Não foi possível ler esta foto HEIC. Tente exportá-la como JPEG.'
             : 'Não foi possível processar esta imagem.',
         )
       }
@@ -245,7 +269,7 @@ export default function PhotoUploader({
           Arraste as fotos aqui
         </p>
         <p className="text-sm text-ink-muted">
-          JPG ou PNG. São redimensionadas e comprimidas no seu navegador antes de subir.
+          JPG, PNG ou HEIC do iPhone. São convertidas e comprimidas no seu navegador antes de subir.
         </p>
         <button
           type="button"
@@ -257,7 +281,7 @@ export default function PhotoUploader({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           multiple
           hidden
           onChange={(e) => {
