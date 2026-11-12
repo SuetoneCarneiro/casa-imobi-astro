@@ -5,6 +5,7 @@ import Input from '../ui/Input.astro'
 import Select from '../ui/Select.astro'
 import Textarea from '../ui/Textarea.astro'
 import type { FieldErrors } from '../../server/validation/property'
+import type { Neighborhood } from '../../server/db/schema'
 
 interface Props {
   action: string
@@ -12,9 +13,17 @@ interface Props {
   errors?: FieldErrors
   submitLabel: string
   cancelHref: string
+  bairros: Neighborhood[]
 }
 
-const { action, values, errors = {}, submitLabel, cancelHref } = Astro.props
+const { action, values, errors = {}, submitLabel, cancelHref, bairros } = Astro.props
+
+/**
+ * Quem cadastra volta para cá depois de criar um bairro, então a página de
+ * bairros precisa saber para onde devolver. O endereço atual já carrega a
+ * página e o id do imóvel em edição.
+ */
+const voltarPara = Astro.url.pathname
 
 const v = (campo: string) => {
   const valor = values[campo]
@@ -67,7 +76,28 @@ const situacoes = [
     <legend class="mb-1 font-display text-lg font-semibold text-ink">Endereço</legend>
     <Input name="addressStreet" label="Rua" class="sm:col-span-4" value={v('addressStreet')} error={errors.addressStreet} />
     <Input name="addressNumber" label="Número" class="sm:col-span-2" value={v('addressNumber')} error={errors.addressNumber} />
-    <Input name="addressNeighborhood" label="Bairro" class="sm:col-span-3" value={v('addressNeighborhood')} error={errors.addressNeighborhood} />
+    <div class="sm:col-span-3">
+      <Select
+        name="neighborhoodId"
+        label="Bairro"
+        options={bairros.map((b) => ({ value: String(b.id), label: b.name }))}
+        placeholder="Selecione o bairro"
+        value={v('neighborhoodId')}
+        error={errors.neighborhoodId}
+      />
+      {/*
+        Link de verdade, e não um modal: a gestão dos bairros é uma tela por
+        si. O rascunho do formulário é guardado antes de sair e devolvido na
+        volta, para ninguém perder o que já tinha digitado.
+      */}
+      <a
+        href={`/admin/bairros?voltar=${encodeURIComponent(voltarPara)}`}
+        data-novo-bairro
+        class="mt-1.5 inline-block text-sm text-brand-700 underline underline-offset-2 hover:text-brand-900"
+      >
+        Não encontrou? Cadastrar bairro
+      </a>
+    </div>
     <Input name="addressCity" label="Cidade" class="sm:col-span-2" value={v('addressCity') || 'Caruaru'} error={errors.addressCity} />
     <Input name="addressState" label="UF" class="sm:col-span-1" maxlength="2" value={v('addressState') || 'PE'} error={errors.addressState} />
     <Input name="addressZip" label="CEP" class="sm:col-span-2" value={v('addressZip')} error={errors.addressZip} />
@@ -93,3 +123,7 @@ const situacoes = [
     <Button href={cancelHref} variant="ghost">Cancelar</Button>
   </div>
 </form>
+
+<script>
+  import '../../scripts/rascunho-imovel'
+</script>

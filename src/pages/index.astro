@@ -13,7 +13,7 @@ import { site } from '../lib/site'
 import { createDb } from '../server/db/client'
 import {
   countByType,
-  listNeighborhoods,
+  listNeighborhoodsComImovel,
   searchProperties,
 } from '../server/db/queries/properties'
 import { findCovers } from '../server/db/queries/images'
@@ -26,7 +26,7 @@ const [casas, apartamentos, terrenos, bairros, porTipo] = await Promise.all([
   searchProperties(db, { type: 'house' }),
   searchProperties(db, { type: 'apartment' }),
   searchProperties(db, { type: 'land' }),
-  listNeighborhoods(db),
+  listNeighborhoodsComImovel(db),
   countByType(db),
 ])
 

@@ -1,6 +1,28 @@
-import { and, desc, eq, gte, isNotNull, lte, ne, or, sql, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, getTableColumns, gte, lte, ne, or, sql, type SQL } from 'drizzle-orm'
 import type { Db } from '../client'
-import { properties, type NewProperty, type Property } from '../schema'
+import { neighborhoods, properties, type NewProperty, type Property } from '../schema'
+
+/**
+ * Imóvel com o nome do bairro já resolvido.
+ *
+ * O bairro mora em outra tabela, mas quem exibe um imóvel quase sempre precisa
+ * do nome. Em vez de cada página fazer o próprio join e correr o risco de
+ * esquecer, toda consulta de leitura devolve esta forma.
+ */
+export type PropertyComBairro = Property & { neighborhood: string | null }
+
+const colunasComBairro = {
+  ...getTableColumns(properties),
+  neighborhood: neighborhoods.name,
+}
+
+/** `leftJoin`: imóvel sem bairro continua aparecendo, com o nome nulo. */
+function selecionarComBairro(db: Db) {
+  return db
+    .select(colunasComBairro)
+    .from(properties)
+    .leftJoin(neighborhoods, eq(neighborhoods.id, properties.neighborhoodId))
+}
 
 /**
  * Consultas de imóveis.
@@ -26,7 +48,9 @@ function buildWhere(filters: PropertyFilters): SQL | undefined {
   const parts: (SQL | undefined)[] = [onlyActive]
 
   if (filters.type) parts.push(eq(properties.type, filters.type))
-  if (filters.neighborhood) parts.push(eq(properties.addressNeighborhood, filters.neighborhood))
+  // O filtro público viaja pela URL como nome (`?bairro=Centro`), que é legível
+  // e compartilhável, então a comparação é pelo nome e não pelo id.
+  if (filters.neighborhood) parts.push(eq(neighborhoods.name, filters.neighborhood))
   if (filters.minBedrooms) parts.push(gte(properties.bedrooms, filters.minBedrooms))
   if (filters.maxPrice) parts.push(lte(properties.price, filters.maxPrice))
 
@@ -34,7 +58,10 @@ function buildWhere(filters: PropertyFilters): SQL | undefined {
 }
 
 export async function listActiveProperties(db: Db, limit = 12) {
-  return db.select().from(properties).where(onlyActive).orderBy(desc(properties.createdAt)).limit(limit)
+  return selecionarComBairro(db)
+    .where(onlyActive)
+    .orderBy(desc(properties.createdAt))
+    .limit(limit)
 }
 
 export async function countActiveProperties(db: Db) {
@@ -43,9 +70,7 @@ export async function countActiveProperties(db: Db) {
 }
 
 export async function findPropertyBySlug(db: Db, slug: string) {
-  const [row] = await db
-    .select()
-    .from(properties)
+  const [row] = await selecionarComBairro(db)
     .where(and(onlyActive, eq(properties.slug, slug)))
     .limit(1)
   return row ?? null
@@ -56,15 +81,18 @@ export async function searchProperties(db: Db, filters: PropertyFilters, page = 
   const where = buildWhere(filters)
   const safePage = Math.max(1, page)
 
+  // A contagem repete o join porque o filtro de bairro depende dele.
   const [items, [counted]] = await Promise.all([
-    db
-      .select()
-      .from(properties)
+    selecionarComBairro(db)
       .where(where)
       .orderBy(desc(properties.createdAt))
       .limit(PER_PAGE)
       .offset((safePage - 1) * PER_PAGE),
-    db.select({ total: sql<number>`count(*)` }).from(properties).where(where),
+    db
+      .select({ total: sql<number>`count(*)` })
+      .from(properties)
+      .leftJoin(neighborhoods, eq(neighborhoods.id, properties.neighborhoodId))
+      .where(where),
   ])
 
   const total = counted?.total ?? 0
@@ -80,29 +108,32 @@ export async function searchProperties(db: Db, filters: PropertyFilters, page = 
 
 /**
  * Bairros que realmente têm imóvel ativo.
- * Preenche o filtro a partir do acervo, em vez de uma lista fixa que envelhece.
+ *
+ * O filtro público mostra só estes, e não a lista inteira do painel: oferecer
+ * um bairro que não devolveria resultado nenhum só frustra quem busca.
  */
-export async function listNeighborhoods(db: Db) {
+export async function listNeighborhoodsComImovel(db: Db) {
   const rows = await db
-    .selectDistinct({ name: properties.addressNeighborhood })
-    .from(properties)
-    .where(and(onlyActive, isNotNull(properties.addressNeighborhood)))
-    .orderBy(properties.addressNeighborhood)
+    .selectDistinct({ name: neighborhoods.name })
+    .from(neighborhoods)
+    .innerJoin(properties, eq(properties.neighborhoodId, neighborhoods.id))
+    .where(onlyActive)
+    .orderBy(asc(neighborhoods.name))
 
-  return rows.map((r) => r.name).filter((n): n is string => Boolean(n))
+  return rows.map((r) => r.name)
 }
 
 /** Sugestões no fim da página de detalhe: mesmo bairro ou mesmo tipo. */
 export async function listRelatedProperties(db: Db, property: Property, limit = 3) {
-  return db
-    .select()
-    .from(properties)
+  return selecionarComBairro(db)
     .where(
       and(
         onlyActive,
         ne(properties.id, property.id),
         or(
-          eq(properties.addressNeighborhood, property.addressNeighborhood ?? ''),
+          property.neighborhoodId
+            ? eq(properties.neighborhoodId, property.neighborhoodId)
+            : undefined,
           eq(properties.type, property.type),
         ),
       ),
@@ -128,7 +159,7 @@ export async function countByType(db: Db) {
 
 /** O painel enxerga inativos também: soft delete não some da gestão. */
 export async function findPropertyById(db: Db, id: number) {
-  const [row] = await db.select().from(properties).where(eq(properties.id, id)).limit(1)
+  const [row] = await selecionarComBairro(db).where(eq(properties.id, id)).limit(1)
   return row ?? null
 }
 
@@ -197,21 +228,23 @@ export async function searchAdminProperties(
       or(
         sql`lower(${properties.title}) like ${termo}`,
         sql`lower(${properties.code}) like ${termo}`,
-        sql`lower(coalesce(${properties.addressNeighborhood}, '')) like ${termo}`,
+        sql`lower(coalesce(${neighborhoods.name}, '')) like ${termo}`,
       ),
     )
   }
   const where = partes.length ? and(...partes) : undefined
 
   const [items, [counted]] = await Promise.all([
-    db
-      .select()
-      .from(properties)
+    selecionarComBairro(db)
       .where(where)
       .orderBy(desc(properties.updatedAt))
       .limit(ADMIN_PER_PAGE)
       .offset((page - 1) * ADMIN_PER_PAGE),
-    db.select({ total: sql<number>`count(*)` }).from(properties).where(where),
+    db
+      .select({ total: sql<number>`count(*)` })
+      .from(properties)
+      .leftJoin(neighborhoods, eq(neighborhoods.id, properties.neighborhoodId))
+      .where(where),
   ])
 
   const total = counted?.total ?? 0

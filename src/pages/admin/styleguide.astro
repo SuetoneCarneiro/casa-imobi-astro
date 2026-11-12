@@ -14,12 +14,12 @@ import Section from '../../components/ui/Section.astro'
 import Select from '../../components/ui/Select.astro'
 import Textarea from '../../components/ui/Textarea.astro'
 import AdminLayout from '../../layouts/AdminLayout.astro'
-import type { Property } from '../../server/db/schema'
+import type { PropertyComBairro } from '../../server/db/queries/properties'
 
 // Vive dentro do painel: quem garante o acesso é o middleware de sessão.
 
 const now = Date.now()
-const exemplo: Property = {
+const exemplo: PropertyComBairro = {
   id: 1,
   code: 'CI-0001',
   title: 'Casa com 3 quartos e suíte no Maurício de Nassau',
@@ -39,7 +39,8 @@ const exemplo: Property = {
   addressStreet: 'Rua Rádio Clube de Pernambuco',
   addressNumber: '212',
   hideAddressNumber: true,
-  addressNeighborhood: 'Maurício de Nassau',
+  neighborhoodId: 1,
+  neighborhood: 'Maurício de Nassau',
   addressCity: 'Caruaru',
   addressState: 'PE',
   addressZip: '55012-530',
@@ -50,7 +51,7 @@ const exemplo: Property = {
   updatedAt: now,
 }
 
-const semFoto: Property = {
+const semFoto: PropertyComBairro = {
   ...exemplo,
   id: 2,
   code: 'CI-0004',
@@ -63,7 +64,8 @@ const semFoto: Property = {
   bathrooms: 0,
   parkingSpaces: 0,
   usableArea: 360,
-  addressNeighborhood: 'Petrópolis',
+  neighborhoodId: 2,
+  neighborhood: 'Petrópolis',
   isCondo: true,
 }
 
@@ -145,6 +147,7 @@ const icons: IconName[] = [
         <Button variant="secondary">Secundário</Button>
         <Button variant="ghost">Ghost</Button>
         <Button variant="whatsapp"><Icon name="whatsapp" size={17} />WhatsApp</Button>
+        <Button variant="danger">Remover</Button>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <Button size="sm">Pequeno</Button>

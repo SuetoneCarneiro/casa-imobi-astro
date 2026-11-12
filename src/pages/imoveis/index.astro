@@ -11,7 +11,7 @@ import { hasAnyFilter, parseFilters } from '../../lib/filters'
 import { PROPERTY_TYPE_LABELS } from '../../lib/format'
 import { site } from '../../lib/site'
 import { createDb } from '../../server/db/client'
-import { listNeighborhoods, searchProperties } from '../../server/db/queries/properties'
+import { listNeighborhoodsComImovel, searchProperties } from '../../server/db/queries/properties'
 import { findCovers } from '../../server/db/queries/images'
 
 const filtros = parseFilters(Astro.url)
@@ -19,7 +19,7 @@ const filtros = parseFilters(Astro.url)
 const db = createDb(env.DB)
 const [resultado, bairros] = await Promise.all([
   searchProperties(db, filtros, filtros.page),
-  listNeighborhoods(db),
+  listNeighborhoodsComImovel(db),
 ])
 
 const { items, total, page, totalPages } = resultado

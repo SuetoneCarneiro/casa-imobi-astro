@@ -1,5 +1,6 @@
 ---
 import type { Property } from '../../server/db/schema'
+import type { PropertyComBairro } from '../../server/db/queries/properties'
 import { imageUrl } from '../../server/services/images'
 import Button from '../ui/Button.astro'
 import Icon, { type IconName } from '../ui/Icon.astro'
@@ -8,7 +9,7 @@ import PropertyCard from './PropertyCard.astro'
 interface Props {
   title: string
   icon: IconName
-  properties: Property[]
+  properties: PropertyComBairro[]
   /** Capas já resolvidas pela página, para não consultar por cartão. */
   covers?: Map<number, { storageKey: string; format: 'webp' | 'jpg' | 'png' }>
   /** Total de ativos na categoria, para o rótulo do botão. */

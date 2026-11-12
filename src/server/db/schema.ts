@@ -55,6 +55,26 @@ export const sessions = sqliteTable(
   (t) => [index('idx_sessions_user').on(t.userId)],
 )
 
+// bairros
+
+/**
+ * Lista fechada de bairros, mantida pelo painel.
+ *
+ * Antes o bairro era texto livre em cada imóvel, o que deixava "Maurício de
+ * Nassau" e "Mauricio de Nassau" conviverem como se fossem lugares diferentes
+ * e quebrarem o filtro público. Com tabela própria, renomear corrige todo o
+ * acervo de uma vez.
+ */
+export const neighborhoods = sqliteTable(
+  'neighborhoods',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex('idx_neighborhoods_name').on(t.name)],
+)
+
 // imóveis
 
 export const PROPERTY_TYPES = ['house', 'apartment', 'land', 'commercial'] as const
@@ -98,7 +118,10 @@ export const properties = sqliteTable(
     addressNumber: text('address_number'),
     /** Só esconde na exibição pública. O dado continua no banco. */
     hideAddressNumber: integer('hide_address_number', { mode: 'boolean' }).notNull().default(false),
-    addressNeighborhood: text('address_neighborhood'),
+    /** `restrict`: bairro em uso não pode sumir e levar o endereço junto. */
+    neighborhoodId: integer('neighborhood_id').references(() => neighborhoods.id, {
+      onDelete: 'restrict',
+    }),
     addressCity: text('address_city').notNull().default('Caruaru'),
     addressState: text('address_state').notNull().default('PE'),
     addressZip: text('address_zip'),
@@ -116,7 +139,7 @@ export const properties = sqliteTable(
     uniqueIndex('idx_properties_slug').on(t.slug),
     // a listagem pública filtra por aqui
     index('idx_properties_listing').on(t.status, t.type, t.price),
-    index('idx_properties_neighborhood').on(t.addressNeighborhood),
+    index('idx_properties_neighborhood').on(t.neighborhoodId),
   ],
 )
 
@@ -161,3 +184,5 @@ export type NewUser = typeof users.$inferInsert
 export type Property = typeof properties.$inferSelect
 export type NewProperty = typeof properties.$inferInsert
 export type PropertyImage = typeof propertyImages.$inferSelect
+export type Neighborhood = typeof neighborhoods.$inferSelect
+export type NewNeighborhood = typeof neighborhoods.$inferInsert

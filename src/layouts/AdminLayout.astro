@@ -1,7 +1,12 @@
 ---
 import Icon, { type IconName } from '../components/ui/Icon.astro'
 import { site } from '../lib/site'
-import { podeGerenciarUsuarios, podeVerGuiaDeEstilo, rotuloDoPapel } from '../server/services/permissions'
+import {
+  podeEditarBairros,
+  podeGerenciarUsuarios,
+  podeVerGuiaDeEstilo,
+  rotuloDoPapel,
+} from '../server/services/permissions'
 import Layout from './Layout.astro'
 
 interface Props {
@@ -20,6 +25,9 @@ const nav: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin', label: 'Visão geral', icon: 'home' },
   { href: '/admin/imoveis', label: 'Imóveis', icon: 'building' },
   ...(podeGerenciarUsuarios(user) ? [{ href: '/admin/usuarios', label: 'Usuários', icon: 'users' as IconName }] : []),
+  // Quem só cria bairro chega pelo atalho do formulário, então o item do
+  // menu é para quem administra a lista.
+  ...(podeEditarBairros(user) ? [{ href: '/admin/bairros', label: 'Bairros', icon: 'pin' as IconName }] : []),
   ...(podeVerGuiaDeEstilo(user) ? [{ href: '/admin/styleguide', label: 'Guia de estilo', icon: 'palette' as IconName }] : []),
   // Sem condição: trocar a própria senha é de todo mundo, inclusive do corretor.
   { href: '/admin/conta', label: 'Minha conta', icon: 'user' },

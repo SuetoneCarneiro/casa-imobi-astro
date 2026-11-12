@@ -33,7 +33,8 @@ export const propertySchema = z.object({
   addressStreet: z.string().trim().max(160).optional(),
   addressNumber: z.string().trim().max(20).optional(),
   hideAddressNumber: z.boolean().default(false),
-  addressNeighborhood: z.string().trim().max(80).optional(),
+  /** Id da linha em `neighborhoods`. Vazio no formulário vira null. */
+  neighborhoodId: z.number().int().positive().nullable().default(null),
   addressCity: z.string().trim().max(80).default('Caruaru'),
   addressState: z.string().trim().length(2).default('PE'),
   addressZip: z.string().trim().max(12).optional(),
@@ -87,7 +88,7 @@ export function parsePropertyForm(form: FormData) {
     addressStreet: opcional(form, 'addressStreet'),
     addressNumber: opcional(form, 'addressNumber'),
     hideAddressNumber: form.get('hideAddressNumber') !== null,
-    addressNeighborhood: opcional(form, 'addressNeighborhood'),
+    neighborhoodId: texto(form, 'neighborhoodId') ? Number(texto(form, 'neighborhoodId')) : null,
     addressCity: texto(form, 'addressCity') || 'Caruaru',
     addressState: (texto(form, 'addressState') || 'PE').toUpperCase(),
     addressZip: opcional(form, 'addressZip'),

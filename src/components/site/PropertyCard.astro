@@ -1,11 +1,11 @@
 ---
 import { formatArea, formatBRL, PROPERTY_TYPE_ICONS, PROPERTY_TYPE_LABELS } from '../../lib/format'
-import type { Property } from '../../server/db/schema'
+import type { PropertyComBairro } from '../../server/db/queries/properties'
 import Badge from '../ui/Badge.astro'
 import Icon from '../ui/Icon.astro'
 
 interface Props {
-  property: Property
+  property: PropertyComBairro
   /** URL da foto de capa. Ausente = imóvel ainda sem foto (estado real, não erro). */
   coverUrl?: string | null
   /** A primeira dobra não deve usar lazy. */
@@ -59,10 +59,10 @@ const href = `/imoveis/${property.slug}`
         </a>
       </h3>
       {
-        property.addressNeighborhood && (
+        property.neighborhood && (
           <p class="mt-1 flex items-center gap-1.5 text-sm text-ink-muted">
             <Icon name="pin" size={14} />
-            {property.addressNeighborhood}, {property.addressCity}
+            {property.neighborhood}, {property.addressCity}
           </p>
         )
       }

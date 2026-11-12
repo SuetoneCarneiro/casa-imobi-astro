@@ -31,7 +31,7 @@ function toColumns(input: PropertyInput) {
     addressStreet: input.addressStreet ?? null,
     addressNumber: input.addressNumber ?? null,
     hideAddressNumber: input.hideAddressNumber,
-    addressNeighborhood: input.addressNeighborhood ?? null,
+    neighborhoodId: input.neighborhoodId,
     addressCity: input.addressCity,
     addressState: input.addressState,
     addressZip: input.addressZip ?? null,

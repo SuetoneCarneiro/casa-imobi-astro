@@ -124,7 +124,7 @@ const { items, total, totalPages } = await searchAdminProperties(db, { q, status
                   <a href={`/admin/imoveis/${imovel.id}`} class="font-medium text-ink hover:underline">
                     {imovel.title}
                   </a>
-                  <p class="text-xs text-ink-muted">{imovel.addressNeighborhood ?? '—'}</p>
+                  <p class="text-xs text-ink-muted">{imovel.neighborhood ?? '—'}</p>
                 </td>
                 <td class="px-4 py-3 text-ink-soft">{PROPERTY_TYPE_LABELS[imovel.type]}</td>
                 <td class="px-4 py-3 tabular-nums text-ink-soft">{formatBRL(imovel.price)}</td>

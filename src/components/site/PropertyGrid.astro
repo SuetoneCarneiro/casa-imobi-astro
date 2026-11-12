@@ -1,10 +1,11 @@
 ---
 import type { Property } from '../../server/db/schema'
+import type { PropertyComBairro } from '../../server/db/queries/properties'
 import { imageUrl } from '../../server/services/images'
 import PropertyCard from './PropertyCard.astro'
 
 interface Props {
-  properties: Property[]
+  properties: PropertyComBairro[]
   /** Capas já resolvidas pela página, para não consultar por cartão. */
   covers?: Map<number, { storageKey: string; format: 'webp' | 'jpg' | 'png' }>
   /** Quantos cartões carregam a imagem sem lazy, por estarem na primeira dobra. */

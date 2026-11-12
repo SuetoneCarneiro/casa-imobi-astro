@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { formatArea, formatBRL, publicAddress } from '../../src/lib/format'
-import type { Property } from '../../src/server/db/schema'
+import type { PropertyComBairro } from '../../src/server/db/queries/properties'
 
-const imovel = (over: Partial<Property> = {}) =>
+const imovel = (over: Partial<PropertyComBairro> = {}) =>
   ({
     addressStreet: 'Rua Rádio Clube de Pernambuco',
     addressNumber: '212',
     hideAddressNumber: false,
-    addressNeighborhood: 'Maurício de Nassau',
+    neighborhood: 'Maurício de Nassau',
     ...over,
-  }) as Property
+  }) as PropertyComBairro
 
 describe('formatBRL', () => {
   it('converte centavos em reais', () => {

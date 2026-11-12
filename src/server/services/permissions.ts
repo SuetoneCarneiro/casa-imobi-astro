@@ -32,6 +32,27 @@ export function podeVerGuiaDeEstilo(user: Pick<User, 'role'>) {
   return user.role === 'admin'
 }
 
+/**
+ * Criar bairro é de todo mundo que cadastra imóvel: o corretor esbarra num
+ * bairro que falta no meio do cadastro e não pode ficar esperando alguém.
+ * Renomear e remover mexem em todo o acervo de uma vez, então ficam com quem
+ * responde por ele: administrador e gestor.
+ */
+export function podeCriarBairro(_user: Pick<User, 'role'>) {
+  return true
+}
+
+/**
+ * Exportado porque o middleware também precisa da mesma lista para barrar
+ * `/admin/bairros/<id>`. São duas checagens, uma para esconder o botão e outra
+ * para proteger a rota, e elas não podem divergir.
+ */
+export const PAPEIS_QUE_EDITAM_BAIRROS: Papel[] = ['admin', 'manager']
+
+export function podeEditarBairros(user: Pick<User, 'role'>) {
+  return PAPEIS_QUE_EDITAM_BAIRROS.includes(user.role)
+}
+
 /** Corretor enxerga só o próprio acervo. Os demais enxergam tudo. */
 export function limitadoAosPropriosImoveis(user: Pick<User, 'role'>) {
   return user.role === 'agent'

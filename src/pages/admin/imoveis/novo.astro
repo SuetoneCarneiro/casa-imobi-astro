@@ -4,6 +4,7 @@ import PropertyForm from '../../../components/admin/PropertyForm.astro'
 import Icon from '../../../components/ui/Icon.astro'
 import AdminLayout from '../../../layouts/AdminLayout.astro'
 import { createDb } from '../../../server/db/client'
+import { listNeighborhoods } from '../../../server/db/queries/neighborhoods'
 import { createProperty } from '../../../server/services/properties'
 import {
   parsePropertyForm,
@@ -12,6 +13,7 @@ import {
 } from '../../../server/validation/property'
 
 const user = Astro.locals.user!
+const bairros = await listNeighborhoods(createDb(env.DB))
 let errors: FieldErrors = {}
 let values: Record<string, unknown> = { addressCity: 'Caruaru', addressState: 'PE', status: 'active' }
 
@@ -62,6 +64,7 @@ if (Astro.request.method === 'POST') {
     values={values}
     errors={errors}
     submitLabel="Cadastrar e adicionar fotos"
+    bairros={bairros}
     cancelHref="/admin/imoveis"
   >
     <section slot="fotos" class="flex flex-col gap-3">

@@ -66,7 +66,7 @@ const mensagem = imovel
   ) : (
     <SiteLayout
       title={`${imovel.title} — ${site.name}`}
-      description={imovel.description ?? `${PROPERTY_TYPE_LABELS[imovel.type]} à venda em ${imovel.addressNeighborhood ?? imovel.addressCity}.`}
+      description={imovel.description ?? `${PROPERTY_TYPE_LABELS[imovel.type]} à venda em ${imovel.neighborhood ?? imovel.addressCity}.`}
       whatsappMessage={mensagem}
     >
       <Container class="py-8 sm:py-12">

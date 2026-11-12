@@ -4,7 +4,7 @@
  * Evita o erro clássico de estilizar um link como botão e perder a navegação.
  */
 interface Props {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'whatsapp'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'whatsapp' | 'danger'
   size?: 'sm' | 'md' | 'lg'
   href?: string
   type?: 'button' | 'submit' | 'reset'
@@ -32,6 +32,8 @@ const variants = {
   secondary: 'border border-brand-200 bg-white text-ink hover:bg-brand-50 hover:border-brand-300',
   ghost: 'text-ink hover:bg-brand-50',
   whatsapp: 'bg-whatsapp text-white hover:brightness-95',
+  // Só para ação destrutiva e irreversível, nunca para 'salvar'.
+  danger: 'bg-red-700 text-white hover:bg-red-800 active:bg-red-900',
 }
 
 const sizes = {

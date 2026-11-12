@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers'
 import { createDb } from './server/db/client'
 import { findSessionUser } from './server/db/queries/sessions'
 import { SESSION_COOKIE } from './server/services/session'
-import type { Papel } from './server/services/permissions'
+import { PAPEIS_QUE_EDITAM_BAIRROS, type Papel } from './server/services/permissions'
 
 /**
  * Trechos do painel restritos por papel. Mantidos aqui, e não espalhados pelas
@@ -12,6 +12,9 @@ import type { Papel } from './server/services/permissions'
 const ROTAS_RESTRITAS: { prefixo: string; papeis: Papel[] }[] = [
   { prefixo: '/admin/usuarios', papeis: ['admin'] },
   { prefixo: '/admin/styleguide', papeis: ['admin'] },
+  // Com a barra: `/admin/bairros` (listar e criar) fica aberta, mas
+  // `/admin/bairros/<id>` (renomear e remover) não.
+  { prefixo: '/admin/bairros/', papeis: PAPEIS_QUE_EDITAM_BAIRROS },
 ]
 
 /**

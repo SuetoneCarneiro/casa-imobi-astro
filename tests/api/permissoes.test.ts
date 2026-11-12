@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   limitadoAosPropriosImoveis,
   podeEditarImovel,
+  podeCriarBairro,
+  podeEditarBairros,
   podeGerenciarUsuarios,
   podeVerGuiaDeEstilo,
   resolverPapelDoScript,
@@ -76,5 +78,25 @@ describe('resolverPapelDoScript', () => {
   it('só muda o papel quando ele é pedido por escrito', () => {
     expect(resolverPapelDoScript('admin', 'agent')).toBe('admin')
     expect(resolverPapelDoScript('agent', 'admin')).toBe('agent')
+  })
+})
+
+describe('bairros', () => {
+  /**
+   * O corretor esbarra num bairro que falta no meio de um cadastro. Se
+   * dependesse de alguém, o caminho mais curto seria escolher um bairro
+   * parecido da lista, que é a sujeira que a tabela veio resolver.
+   */
+  it.each(['admin', 'manager', 'agent'] as const)('%s pode criar bairro', (role) => {
+    expect(podeCriarBairro({ role })).toBe(true)
+  })
+
+  // Renomear e remover alcançam o acervo inteiro, não só um imóvel.
+  it.each([
+    ['admin', true],
+    ['manager', true],
+    ['agent', false],
+  ] as const)('%s editando bairro: %s', (role, esperado) => {
+    expect(podeEditarBairros({ role })).toBe(esperado)
   })
 })

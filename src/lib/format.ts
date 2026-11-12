@@ -30,11 +30,21 @@ export const PROPERTY_TYPE_ICONS = {
   commercial: 'store',
 } as const
 
-/** Endereço como o site público mostra, respeitando hideAddressNumber. */
-export function publicAddress(p: Property): string {
+/**
+ * Endereço como o site público mostra, respeitando hideAddressNumber.
+ *
+ * Recebe o nome do bairro já resolvido, e não o imóvel cru: o bairro vive em
+ * outra tabela, e formatar texto não é lugar de consultar banco.
+ */
+type EnderecoExibivel = Pick<
+  Property,
+  'addressStreet' | 'addressNumber' | 'hideAddressNumber'
+> & { neighborhood: string | null }
+
+export function publicAddress(p: EnderecoExibivel): string {
   // O número só faz sentido acompanhado da rua. Sem ela, vira um número solto.
   const mostraNumero = Boolean(p.addressStreet && p.addressNumber && !p.hideAddressNumber)
   const rua = mostraNumero ? `${p.addressStreet}, ${p.addressNumber}` : (p.addressStreet ?? '')
 
-  return [rua, p.addressNeighborhood].filter(Boolean).join(' — ')
+  return [rua, p.neighborhood].filter(Boolean).join(' — ')
 }

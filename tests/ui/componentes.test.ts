@@ -6,7 +6,8 @@ import EmptyState from '../../src/components/site/EmptyState.astro'
 import Pagination from '../../src/components/site/Pagination.astro'
 import PropertyCard from '../../src/components/site/PropertyCard.astro'
 import PropertyGallery from '../../src/components/site/PropertyGallery.astro'
-import type { Property, PropertyImage } from '../../src/server/db/schema'
+import type { PropertyImage } from '../../src/server/db/schema'
+import type { PropertyComBairro } from '../../src/server/db/queries/properties'
 
 let container: AstroContainer
 
@@ -19,7 +20,7 @@ function caracteristicas(html: string) {
   return html.match(/<ul[^>]*>[\s\S]*?<\/ul>/)?.[0] ?? ''
 }
 
-function imovel(over: Partial<Property> = {}): Property {
+function imovel(over: Partial<PropertyComBairro> = {}): PropertyComBairro {
   return {
     id: 1,
     code: 'CI-0001',
@@ -40,7 +41,7 @@ function imovel(over: Partial<Property> = {}): Property {
     addressStreet: 'Rua A',
     addressNumber: '10',
     hideAddressNumber: false,
-    addressNeighborhood: 'Centro',
+    neighborhood: 'Centro',
     addressCity: 'Caruaru',
     addressState: 'PE',
     addressZip: null,
@@ -50,7 +51,7 @@ function imovel(over: Partial<Property> = {}): Property {
     createdAt: 0,
     updatedAt: 0,
     ...over,
-  } as Property
+  } as PropertyComBairro
 }
 
 describe('Button', () => {
