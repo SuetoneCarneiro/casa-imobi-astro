@@ -7,11 +7,15 @@
  * para a vítima um link do painel que termina em outro site, com a confiança
  * do domínio certo na barra de endereço.
  *
- * Por isso só passa caminho interno do painel, nunca endereço absoluto.
+ * Também é o destino do login, que recebe `?destino=` do middleware.
+ *
+ * A checagem é por lista de permissão, e não por recusa: qualquer coisa que
+ * não seja o painel é rejeitada. Recusar caso a caso falha sempre, porque o
+ * navegador normaliza formas que não parecem absolutas. `/\outro.site` é o
+ * exemplo: a barra invertida vira barra e o endereço acaba virando
+ * `//outro.site`, que sai do domínio.
  */
 export function destinoSeguro(bruto: string | null | undefined): string | null {
   if (!bruto) return null
-  // `//outro.site` é endereço absoluto sem esquema, e o navegador o segue.
-  if (bruto.startsWith('//')) return null
-  return bruto.startsWith('/admin/') ? bruto : null
+  return bruto === '/admin' || bruto.startsWith('/admin/') ? bruto : null
 }

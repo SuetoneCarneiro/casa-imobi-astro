@@ -53,13 +53,3 @@ export const site = {
   ],
 } as const
 
-/** Bairros que mais aparecem no acervo — usados nos filtros. */
-export const NEIGHBORHOODS = [
-  'Maurício de Nassau',
-  'Centro',
-  'Universitário',
-  'Petrópolis',
-  'Indianópolis',
-  'Cidade Alta',
-  'Boa Vista',
-] as const

@@ -15,6 +15,13 @@
       "when": 1792001186060,
       "tag": "0001_formato_da_foto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794492155927,
+      "tag": "0002_bairros",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import { findUserByEmail } from '../../db/queries/users'
 import { createSession, deleteSession } from '../../db/queries/sessions'
 import { verifyPassword } from '../../services/password'
 import { SESSION_COOKIE, sessionCookieOptions } from '../../services/session'
+import { destinoSeguro } from '../../../lib/retorno'
 
 export const auth = new Hono<ApiEnv>()
 
@@ -37,9 +38,8 @@ auth.post('/login', async (c) => {
   const { id } = await createSession(db, user.id)
   setCookie(c, SESSION_COOKIE, id, sessionCookieOptions(url))
 
-  // Só aceita destino interno, para não virar redirecionamento aberto.
-  const seguro = destino.startsWith('/') && !destino.startsWith('//') ? destino : '/admin'
-  return c.redirect(seguro, 303)
+  // Mesma checagem da página de bairros, para as duas não divergirem.
+  return c.redirect(destinoSeguro(destino) ?? '/admin', 303)
 })
 
 auth.post('/logout', async (c) => {

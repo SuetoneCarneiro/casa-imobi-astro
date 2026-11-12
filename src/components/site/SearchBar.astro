@@ -1,5 +1,4 @@
 ---
-import { NEIGHBORHOODS } from '../../lib/site'
 import Button from '../ui/Button.astro'
 import Icon from '../ui/Icon.astro'
 import Select from '../ui/Select.astro'
@@ -40,10 +39,13 @@ const prices = [200000, 300000, 500000, 800000, 1200000].map((v) => ({
   }).format(v)}`,
 }))
 
-const bairros = (neighborhoods?.length ? neighborhoods : [...NEIGHBORHOODS]).map((n) => ({
-  value: n,
-  label: n,
-}))
+/*
+ * Sem lista de reserva. Antes, quando o acervo não devolvia bairro, caía numa
+ * lista fixa escrita à mão: num banco novo o visitante veria bairros que não
+ * existem na tabela e todo filtro voltaria vazio. Preferível não oferecer
+ * bairro nenhum a oferecer um que não leva a lugar algum.
+ */
+const bairros = (neighborhoods ?? []).map((n) => ({ value: n, label: n }))
 ---
 
 <!-- GET, não POST: a busca vira URL compartilhável e indexável. -->

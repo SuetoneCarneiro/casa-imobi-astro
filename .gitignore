@@ -31,3 +31,6 @@ docs/
 
 # cobertura de testes
 coverage/
+
+# TCC
+/tcc

@@ -6,6 +6,7 @@ import EmptyState from '../../src/components/site/EmptyState.astro'
 import Pagination from '../../src/components/site/Pagination.astro'
 import PropertyCard from '../../src/components/site/PropertyCard.astro'
 import PropertyGallery from '../../src/components/site/PropertyGallery.astro'
+import SearchBar from '../../src/components/site/SearchBar.astro'
 import type { PropertyImage } from '../../src/server/db/schema'
 import type { PropertyComBairro } from '../../src/server/db/queries/properties'
 
@@ -239,5 +240,32 @@ describe('PropertyGallery', () => {
   it('sem fotos não renderiza diálogo nenhum', async () => {
     const html = await renderizar([])
     expect(html).not.toContain('data-lightbox-dialog')
+  })
+})
+
+describe('SearchBar', () => {
+  const opcoesDeBairro = (html: string) =>
+    (html.match(/<select[^>]*name="bairro"[\s\S]*?<\/select>/)?.[0] ?? '')
+      .match(/<option[^>]*>([^<]*)<\/option>/g) ?? []
+
+  it('lista os bairros que recebe', async () => {
+    const html = await container.renderToString(SearchBar, {
+      props: { neighborhoods: ['Centro', 'Petrópolis'] },
+    })
+    expect(html).toContain('Centro')
+    expect(html).toContain('Petrópolis')
+  })
+
+  /**
+   * O banco de produção nasce vazio. Antes havia uma lista fixa de reserva, e
+   * o visitante veria bairros inexistentes cujo filtro sempre voltaria vazio.
+   */
+  it.each([[[]], [undefined]])('não inventa bairro quando não recebe nenhum (%o)', async (lista) => {
+    const html = await container.renderToString(SearchBar, {
+      props: { neighborhoods: lista },
+    })
+    // Só a opção vazia do placeholder sobra.
+    expect(opcoesDeBairro(html).length).toBeLessThanOrEqual(1)
+    expect(html).not.toContain('Maurício de Nassau')
   })
 })

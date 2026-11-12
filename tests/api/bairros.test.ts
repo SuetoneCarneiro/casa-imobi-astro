@@ -138,10 +138,10 @@ describe('bairroSchema', () => {
 })
 
 describe('destinoSeguro', () => {
-  it('aceita caminho interno do painel', () => {
-    expect(destinoSeguro('/admin/imoveis/novo')).toBe('/admin/imoveis/novo')
-    expect(destinoSeguro('/admin/imoveis/12')).toBe('/admin/imoveis/12')
-  })
+  it.each(['/admin', '/admin/imoveis/novo', '/admin/imoveis/12', '/admin/bairros'])(
+    'aceita %s',
+    (caminho) => expect(destinoSeguro(caminho)).toBe(caminho),
+  )
 
   /**
    * Sem isto, um link do painel terminando em outro site teria a confiança do
@@ -150,8 +150,14 @@ describe('destinoSeguro', () => {
   it.each([
     'https://site-falso.com',
     '//site-falso.com',
+    // A barra invertida é o caso que escapava: o navegador a normaliza para
+    // barra, e `/\\site-falso.com` acaba sendo lido como `//site-falso.com`.
+    String.raw`/\site-falso.com`,
+    String.raw`/\/site-falso.com`,
+    'https:/site-falso.com',
     '/login',
     '/',
+    '/administrativo/fake',
     'admin/imoveis/novo',
     '',
     null,
