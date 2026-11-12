@@ -5,7 +5,8 @@ import Button from '../../src/components/ui/Button.astro'
 import EmptyState from '../../src/components/site/EmptyState.astro'
 import Pagination from '../../src/components/site/Pagination.astro'
 import PropertyCard from '../../src/components/site/PropertyCard.astro'
-import type { Property } from '../../src/server/db/schema'
+import PropertyGallery from '../../src/components/site/PropertyGallery.astro'
+import type { Property, PropertyImage } from '../../src/server/db/schema'
 
 let container: AstroContainer
 
@@ -183,5 +184,59 @@ describe('Pagination', () => {
     })
     expect(html).not.toContain('Anterior')
     expect(html).toContain('Próxima')
+  })
+})
+
+describe('PropertyGallery', () => {
+  function foto(over: Partial<PropertyImage> = {}): PropertyImage {
+    return {
+      id: 1,
+      propertyId: 1,
+      storageKey: 'imoveis/1/abc',
+      format: 'webp',
+      alt: null,
+      position: 0,
+      isCover: true,
+      width: 1024,
+      height: 768,
+      createdAt: 0,
+      ...over,
+    }
+  }
+
+  const renderizar = (imagens: PropertyImage[]) =>
+    container.renderToString(PropertyGallery, { props: { images: imagens, property: imovel() } })
+
+  /** Sem JavaScript o link precisa levar à foto grande por conta própria. */
+  it('aponta cada foto para a variante de 1920px', async () => {
+    const html = await renderizar([foto(), foto({ id: 2, position: 1, isCover: false })])
+    expect(html).toContain('/full.webp')
+    expect((html.match(/data-lightbox[\s>]/g) ?? []).length).toBe(2)
+  })
+
+  /**
+   * O bug que motivou este teste: a classe trazia `flex` sem variante. O
+   * navegador esconde um <dialog> fechado pela própria folha de estilo, mas
+   * qualquer `display` vindo do autor vence essa regra, então o diálogo ficava
+   * ocupando a página desde o carregamento e a foto reaparecia no meio do
+   * conteúdo ao fechar. Um display aqui só pode existir atrelado a `[open]`.
+   */
+  it('não deixa o diálogo ocupar a página enquanto está fechado', async () => {
+    const html = await renderizar([foto()])
+    const classes = html.match(/<dialog[^>]*class="([^"]*)"/)?.[1]?.split(/\s+/) ?? []
+    expect(classes.length).toBeGreaterThan(0)
+
+    const DISPLAY = [
+      'block', 'inline', 'inline-block', 'flex', 'inline-flex', 'grid',
+      'inline-grid', 'table', 'inline-table', 'contents', 'flow-root', 'list-item',
+    ]
+    expect(classes.filter((c) => DISPLAY.includes(c))).toEqual([])
+    expect(classes).toContain('hidden')
+    expect(classes.some((c) => /^open:/.test(c))).toBe(true)
+  })
+
+  it('sem fotos não renderiza diálogo nenhum', async () => {
+    const html = await renderizar([])
+    expect(html).not.toContain('data-lightbox-dialog')
   })
 })
