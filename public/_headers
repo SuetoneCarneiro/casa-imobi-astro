@@ -1,0 +1,6 @@
+# Vale apenas para os arquivos estáticos servidos pelo binding de assets.
+# As páginas, a API e as fotos saem do Worker e recebem os cabeçalhos pelo
+# middleware em src/middleware.ts, que nunca passa por aqui.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

@@ -18,6 +18,29 @@ const ROTAS_RESTRITAS: { prefixo: string; papeis: Papel[] }[] = [
 ]
 
 /**
+ * Cabeçalhos aplicados a TODA resposta que sai do Worker.
+ *
+ * Ficam aqui, e não no `public/_headers`, porque aquele arquivo só vale para
+ * os arquivos estáticos servidos pelo binding de assets. Página renderizada,
+ * rota de API e leitura de foto saem do Worker e nunca passariam por ele.
+ *
+ * - `nosniff` importa principalmente em `/fotos`: sem ele, um arquivo enviado
+ *   como imagem mas interpretado como HTML pelo navegador viraria script
+ *   rodando no nosso domínio.
+ * - `frame-ancestors` é o que impede o painel de ser embutido num site
+ *   qualquer e receber cliques que a pessoa pensa estar dando noutro lugar.
+ *   O `X-Frame-Options` acompanha para navegador que ainda não lê CSP.
+ * - `Referrer-Policy` evita vazar o caminho completo da página do painel para
+ *   terceiros ao seguir um link de saída.
+ */
+const CABECALHOS_DE_SEGURANCA: Record<string, string> = {
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Content-Security-Policy': "frame-ancestors 'none'",
+  'X-Frame-Options': 'DENY',
+}
+
+/**
  * Guarda do painel.
  *
  * Roda antes de qualquer página. Resolve a sessão SÓ nas rotas que precisam
@@ -26,6 +49,32 @@ const ROTAS_RESTRITAS: { prefixo: string; papeis: Papel[] }[] = [
  * do Hono, então aqui elas passam direto.
  */
 export const onRequest = defineMiddleware(async (context, next) => {
+  const resposta = await resolver(context, next)
+
+  // Alguns runtimes devolvem resposta com cabeçalhos imutáveis. Nesse caso,
+  // refaz a resposta em vez de deixar passar sem proteção.
+  try {
+    for (const [nome, valor] of Object.entries(CABECALHOS_DE_SEGURANCA)) {
+      resposta.headers.set(nome, valor)
+    }
+    return resposta
+  } catch {
+    const cabecalhos = new Headers(resposta.headers)
+    for (const [nome, valor] of Object.entries(CABECALHOS_DE_SEGURANCA)) {
+      cabecalhos.set(nome, valor)
+    }
+    return new Response(resposta.body, {
+      status: resposta.status,
+      statusText: resposta.statusText,
+      headers: cabecalhos,
+    })
+  }
+})
+
+type Contexto = Parameters<Parameters<typeof defineMiddleware>[0]>[0]
+type Proximo = Parameters<Parameters<typeof defineMiddleware>[0]>[1]
+
+async function resolver(context: Contexto, next: Proximo): Promise<Response> {
   const { pathname } = context.url
   context.locals.user = null
 
@@ -55,4 +104,4 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   return next()
-})
+}

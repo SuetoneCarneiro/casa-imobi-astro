@@ -16,9 +16,23 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
 
+  // A sessão do painel é nossa, guardada no D1. Sem este `false` o adapter
+  // liga a sessão do Astro sobre KV e provisiona um namespace que nunca é lido.
+  session: false,
+
   // O adapter v14 roda sobre o @cloudflare/vite-plugin: o `astro dev` executa
   // dentro do workerd com os bindings do wrangler.jsonc já disponíveis.
-  adapter: cloudflare(),
+  adapter: cloudflare({
+    /*
+     * `passthrough`: nenhuma imagem é transformada no servidor.
+     *
+     * O padrão do adapter provisiona o binding do Cloudflare Images, que é
+     * serviço pago, e o projeto não usa nada disso: as fotos já chegam
+     * redimensionadas pelo navegador na hora do envio, e são servidas do R2
+     * como arquivo estático.
+     */
+    imageService: 'passthrough',
+  }),
 
   integrations: [react()],
 })

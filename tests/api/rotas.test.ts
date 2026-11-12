@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { api } from '../../src/server/api'
 
 /**
@@ -129,5 +129,35 @@ describe('POST /api/auth/login', () => {
     form.append('senha', 'x')
     const r = await api.request('/api/auth/login', { method: 'POST', body: form }, envFalso())
     expect(r.headers.get('location')).toBe('/login?erro=1')
+  })
+})
+
+describe('POST /api/auth/logout', () => {
+  /**
+   * A sessão abandonada ninguém volta a tocar, então ela ficaria na tabela
+   * para sempre. A varredura pega carona na saída, que é a requisição do
+   * painel com mais folga de CPU.
+   */
+  it('aproveita a saída para varrer as sessões vencidas', async () => {
+    const waitUntil = vi.fn()
+    const r = await api.request(
+      '/api/auth/logout',
+      { method: 'POST', headers: { Cookie: 'casaimobi_sessao=qualquer' } },
+      envFalso(),
+      { waitUntil, passThroughOnException: () => {} } as unknown as ExecutionContext,
+    )
+
+    expect(r.status).toBe(303)
+    expect(waitUntil).toHaveBeenCalledTimes(1)
+  })
+
+  it('não quebra a saída quando não há ExecutionContext', async () => {
+    const r = await api.request(
+      '/api/auth/logout',
+      { method: 'POST', headers: { Cookie: 'casaimobi_sessao=qualquer' } },
+      envFalso(),
+    )
+    expect(r.status).toBe(303)
+    expect(r.headers.get('location')).toBe('/login')
   })
 })

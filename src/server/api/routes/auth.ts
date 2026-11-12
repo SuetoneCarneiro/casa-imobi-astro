@@ -3,7 +3,7 @@ import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import type { ApiEnv } from '../index'
 import { createDb } from '../../db/client'
 import { findUserByEmail } from '../../db/queries/users'
-import { createSession, deleteSession } from '../../db/queries/sessions'
+import { createSession, deleteExpiredSessions, deleteSession } from '../../db/queries/sessions'
 import { verifyPassword } from '../../services/password'
 import { SESSION_COOKIE, sessionCookieOptions } from '../../services/session'
 import { destinoSeguro } from '../../../lib/retorno'
@@ -45,9 +45,29 @@ auth.post('/login', async (c) => {
 auth.post('/logout', async (c) => {
   const url = new URL(c.req.url)
   const sessionId = getCookie(c, SESSION_COOKIE)
+  const db = createDb(c.env.DB)
 
   if (sessionId) {
-    await deleteSession(createDb(c.env.DB), sessionId)
+    await deleteSession(db, sessionId)
+  }
+
+  /*
+   * Aproveita a saída para varrer as sessões vencidas.
+   *
+   * `findSessionUser` já apaga a sessão vencida que alguém tenta reusar, mas a
+   * abandonada ninguém toca de novo e ela fica. Um Cron Trigger seria o lugar
+   * natural, só que o adapter do Astro não expõe o handler `scheduled`, e nesta
+   * escala a tabela cresce algumas centenas de linhas por ano.
+   *
+   * Vai na saída, e não na entrada, de propósito: o login já gasta quase todo o
+   * orçamento de CPU com o PBKDF2, e aqui não há cálculo nenhum disputando.
+   * `waitUntil` deixa a limpeza acontecer depois da resposta ir embora.
+   */
+  try {
+    c.executionCtx.waitUntil(deleteExpiredSessions(db))
+  } catch {
+    // Fora do Worker não há ExecutionContext. A limpeza é oportunista, então
+    // não sair do lugar aqui é melhor que falhar a saída de alguém.
   }
 
   deleteCookie(c, SESSION_COOKIE, { path: '/', secure: url.protocol === 'https:' })
