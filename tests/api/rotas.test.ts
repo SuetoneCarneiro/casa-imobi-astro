@@ -8,9 +8,33 @@ import { api } from '../../src/server/api'
  * o teste simples: basta passar objetos com a mesma forma. Não há string de
  * conexão nem servidor para subir.
  */
+
+/**
+ * Dublê do D1 com a forma que os dois consumidores esperam.
+ *
+ * A rota de saúde usa o D1 cru (`prepare().first()`). O Drizzle usa um caminho
+ * mais longo: `prepare().bind(...params).raw()`, que devolve uma linha por
+ * array de valores. Um dublê sem `bind` não falha em silêncio, ele estoura
+ * dentro do driver, o 500 toma o lugar da resposta real e o teste passa a
+ * medir o tombo em vez da regra.
+ */
+function d1Falso(linhas: unknown[][] = []) {
+  const vinculado = {
+    all: async () => ({ results: linhas, success: true, meta: {} }),
+    raw: async () => linhas,
+    run: async () => ({ success: true, meta: {} }),
+    first: async () => linhas[0] ?? null,
+  }
+  return {
+    prepare: () => ({ ...vinculado, bind: () => vinculado }),
+    batch: async (consultas: unknown[]) =>
+      consultas.map(() => ({ results: [], success: true, meta: {} })),
+  }
+}
+
 function envFalso(over: Record<string, unknown> = {}) {
   return {
-    DB: { prepare: () => ({ first: async () => ({ ok: 1 }) }) },
+    DB: d1Falso(),
     BUCKET: { head: async () => null },
     ...over,
   } as never
@@ -74,19 +98,17 @@ describe('proteção das rotas de foto', () => {
     await expect(r.json()).resolves.toEqual({ error: 'Não autenticado' })
   })
 
+  // Banco sem nenhuma linha equivale a "esta sessão não existe". A distinção
+  // importa: cookie ausente responde 'Não autenticado', cookie que não casa com
+  // nenhuma sessão responde 'Sessão expirada'.
   it('cookie de sessão inexistente também é recusado', async () => {
     const r = await api.request(
       '/api/fotos/imovel/1',
       { method: 'POST', headers: { Cookie: 'casaimobi_sessao=inventado' } },
-      envFalso({
-        DB: {
-          prepare: () => ({ first: async () => null }),
-          // O middleware usa Drizzle, que chama `batch`/`prepare`; devolver
-          // vazio equivale a "sessão não encontrada".
-        },
-      }),
+      envFalso({ DB: d1Falso([]) }),
     )
-    expect([401, 500]).toContain(r.status)
+    expect(r.status).toBe(401)
+    await expect(r.json()).resolves.toEqual({ error: 'Sessão expirada' })
   })
 })
 
