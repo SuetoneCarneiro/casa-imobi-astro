@@ -17,6 +17,7 @@ import { site } from '../../lib/site'
 import { createDb } from '../../server/db/client'
 import { findPropertyBySlug, listRelatedProperties } from '../../server/db/queries/properties'
 import { findCovers, listPropertyImages } from '../../server/db/queries/images'
+import { imageUrl } from '../../server/services/images'
 
 const { slug } = Astro.params
 const db = createDb(env.DB)
@@ -44,6 +45,59 @@ const specs = imovel
 
 const area = imovel ? formatArea(imovel.usableArea) : null
 
+/**
+ * Dados estruturados do imóvel.
+ *
+ * É o que faz o Google mostrar preço, quartos e área direto no resultado de
+ * busca, em vez de só o título e um trecho do texto. Preço em reais, não em
+ * centavos: a conversão que o resto do site faz na exibição precisa acontecer
+ * aqui também, senão o anúncio sai mil vezes mais caro.
+ */
+const base = site.url ?? Astro.url.origin
+const dadosEstruturados = imovel
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'RealEstateListing',
+      name: imovel.title,
+      url: new URL(`/imoveis/${imovel.slug}`, base).href,
+      ...(imovel.description ? { description: imovel.description } : {}),
+      ...(fotos.length
+        ? { image: fotos.map((f) => new URL(imageUrl(f.storageKey, 'md', f.format), base).href) }
+        : {}),
+      datePosted: new Date(imovel.createdAt).toISOString(),
+      offers: {
+        '@type': 'Offer',
+        price: imovel.price / 100,
+        priceCurrency: 'BRL',
+        availability: 'https://schema.org/InStock',
+      },
+      address: {
+        '@type': 'PostalAddress',
+        /*
+         * O bairro entra dentro de `streetAddress`. O schema.org não tem campo
+         * próprio para bairro, e inventar `addressNeighborhood` só geraria
+         * aviso de propriedade desconhecida na validação do Google.
+         */
+        ...(imovel.addressStreet || imovel.neighborhood
+          ? {
+              streetAddress: [imovel.addressStreet, imovel.neighborhood]
+                .filter(Boolean)
+                .join(' — '),
+            }
+          : {}),
+        addressLocality: imovel.addressCity,
+        addressRegion: imovel.addressState,
+        ...(imovel.addressZip ? { postalCode: imovel.addressZip } : {}),
+        addressCountry: 'BR',
+      },
+      ...(imovel.bedrooms ? { numberOfBedrooms: imovel.bedrooms } : {}),
+      ...(imovel.bathrooms ? { numberOfBathroomsTotal: imovel.bathrooms } : {}),
+      ...(imovel.usableArea
+        ? { floorSize: { '@type': 'QuantitativeValue', value: imovel.usableArea, unitCode: 'MTK' } }
+        : {}),
+    }
+  : null
+
 const mensagem = imovel
   ? `Olá! Tenho interesse no imóvel ${imovel.code} (${imovel.title}). Ainda está disponível?`
   : undefined
@@ -68,7 +122,16 @@ const mensagem = imovel
       title={`${imovel.title} — ${site.name}`}
       description={imovel.description ?? `${PROPERTY_TYPE_LABELS[imovel.type]} à venda em ${imovel.neighborhood ?? imovel.addressCity}.`}
       whatsappMessage={mensagem}
+      type="article"
+      image={fotos[0] ? imageUrl(fotos[0].storageKey, 'md', fotos[0].format) : undefined}
     >
+      {/* set:html em JSON serializado pelo próprio servidor, não em entrada de
+          usuário: o conteúdo já saiu de JSON.stringify e não vira marcação. */}
+      <script
+        slot="head"
+        type="application/ld+json"
+        set:html={JSON.stringify(dadosEstruturados)}
+      />
       <Container class="py-8 sm:py-12">
         <nav aria-label="Trilha de navegação" class="mb-6 text-sm text-ink-muted">
           <a href="/" class="hover:text-ink">Início</a>

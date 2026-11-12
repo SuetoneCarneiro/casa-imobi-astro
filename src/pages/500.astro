@@ -1,0 +1,32 @@
+---
+import Button from '../components/ui/Button.astro'
+import Container from '../components/ui/Container.astro'
+import Icon from '../components/ui/Icon.astro'
+import SiteLayout from '../layouts/SiteLayout.astro'
+import { site } from '../lib/site'
+
+/*
+ * Astro entrega o erro aqui, mas ele NÃO vai para a tela: mensagem de erro
+ * costuma carregar caminho de arquivo e detalhe de consulta. Quem precisa
+ * dele é o log, que a observabilidade da Cloudflare já recolhe.
+ */
+const { error } = Astro.props
+if (error) console.error('[500]', error)
+---
+
+<SiteLayout title={`Erro no servidor — ${site.name}`} noindex>
+  <Container class="flex flex-col items-center gap-4 py-24 text-center sm:py-32">
+    <p class="font-display text-6xl font-bold text-brand-200">500</p>
+    <h1 class="font-display text-3xl font-bold text-ink">Algo deu errado aqui</h1>
+    <p class="max-w-md text-ink-soft">
+      A falha é nossa, não sua. Tente de novo em instantes ou fale com a gente pelo WhatsApp.
+    </p>
+    <div class="mt-2 flex flex-wrap justify-center gap-3">
+      <Button href="/">Ir para a página inicial</Button>
+      <Button href={site.whatsapp.link('Olá! O site apresentou um erro.')} variant="whatsapp" target="_blank" rel="noopener">
+        <Icon name="whatsapp" size={18} />
+        Falar no WhatsApp
+      </Button>
+    </div>
+  </Container>
+</SiteLayout>

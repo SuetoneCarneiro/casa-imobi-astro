@@ -7,6 +7,20 @@
  */
 
 export const site = {
+  /**
+   * Endereço público definitivo, ou `null` enquanto o site estiver num
+   * endereço provisório como o `.workers.dev`.
+   *
+   * É um interruptor só, de propósito. Com `null`, o canonical sai do próprio
+   * endereço que atendeu a requisição (nunca fica errado) e o `robots.txt`
+   * fecha o site para buscadores. Indexar uma cópia num endereço descartável
+   * faria ela disputar resultado com o site que a imobiliária já tem no ar, e
+   * depois seria preciso desfazer isso.
+   *
+   * Para publicar de verdade: troque por 'https://casaimobi.com.br'.
+   */
+  url: null as string | null,
+
   name: 'CasaImobi',
   legalName: 'CasaImobi Negócios Imobiliários',
   tagline: 'Negócios Imobiliários',

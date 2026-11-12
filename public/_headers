@@ -1,6 +1,12 @@
-# Vale apenas para os arquivos estáticos servidos pelo binding de assets.
-# As páginas, a API e as fotos saem do Worker e recebem os cabeçalhos pelo
-# middleware em src/middleware.ts, que nunca passa por aqui.
+# Vale para o que o binding de assets serve sozinho: os arquivos de /_astro,
+# as imagens de public/ e as páginas pré-renderizadas (/sobre, /anuncie,
+# /contato, /404). Essas páginas NÃO passam pelo middleware, porque viram
+# arquivo no build, então os mesmos cabeçalhos precisam estar aqui também.
+#
+# O que sai do Worker (páginas renderizadas, /api, /fotos) recebe os
+# cabeçalhos em src/middleware.ts.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Frame-Options: DENY

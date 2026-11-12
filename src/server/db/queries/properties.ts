@@ -142,6 +142,20 @@ export async function listRelatedProperties(db: Db, property: Property, limit = 
     .limit(limit)
 }
 
+/**
+ * Todos os imóveis ativos, só o que o sitemap precisa.
+ *
+ * Sem paginação de propósito: o sitemap tem que listar o acervo inteiro, e o
+ * limite do protocolo é 50 mil URLs, muito acima do que esta imobiliária terá.
+ */
+export async function listSlugsForSitemap(db: Db) {
+  return db
+    .select({ slug: properties.slug, updatedAt: properties.updatedAt })
+    .from(properties)
+    .where(onlyActive)
+    .orderBy(desc(properties.updatedAt))
+}
+
 /** Quantos imóveis ativos por tipo, para os cartões de categoria da home. */
 export async function countByType(db: Db) {
   const rows = await db

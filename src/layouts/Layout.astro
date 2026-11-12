@@ -1,15 +1,40 @@
 ---
 import '../styles/global.css'
+import { site } from '../lib/site'
 
 interface Props {
   title?: string
   description?: string
+  /** Caminho de uma imagem para o cartão de compartilhamento. */
+  image?: string
+  /** Páginas do painel e endereços provisórios ficam fora dos buscadores. */
+  noindex?: boolean
+  /** `article` nas páginas de imóvel, `website` no resto. */
+  type?: 'website' | 'article'
 }
 
 const {
   title = 'CasaImobi — Imobiliária em Caruaru/PE',
   description = 'Compra e venda de imóveis em Caruaru e região.',
+  image = '/logo-casaimobi-web.png',
+  noindex = false,
+  type = 'website',
 } = Astro.props
+
+/*
+ * Canonical e og:url só existem com domínio fixado.
+ *
+ * Derivá-los do request pareceria mais esperto, mas página pré-renderizada
+ * congela o HTML no build: o endereço gravado seria o do build, não o de quem
+ * acessa. E canonical apontando para o lugar errado é pior que canonical
+ * nenhum. Sem domínio o site está fora do índice de qualquer forma.
+ */
+const base = site.url ?? Astro.url.origin
+const canonical = site.url ? new URL(Astro.url.pathname, site.url).href : null
+const imagemAbsoluta = new URL(image, base).href
+
+// Em endereço provisório o site inteiro fica fora do índice.
+const foraDoIndice = noindex || site.url === null
 ---
 
 <!doctype html>
@@ -17,11 +42,31 @@ const {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    {/* Recortados do símbolo da marca. O /favicon.ico fica para rastreador
+        antigo, que o pede nessa raiz sem olhar o HTML. */}
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={description} />
+
     <title>{title}</title>
+    <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    {foraDoIndice && <meta name="robots" content="noindex, nofollow" />}
+
+    {/* O que aparece quando alguém cola o link no WhatsApp, que é por onde
+        este público compartilha imóvel. */}
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    <meta property="og:image" content={imagemAbsoluta} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <slot name="head" />
   </head>
   <body class="min-h-dvh bg-surface text-ink antialiased">
     <slot />

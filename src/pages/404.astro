@@ -1,4 +1,11 @@
 ---
+/*
+ * Página estática: nada aqui consulta o banco nem lê a requisição. Gerada no
+ * build, é servida como arquivo pelo binding de assets, sem acordar o Worker.
+ * Isso poupa invocação e CPU, que no plano gratuito são contados.
+ */
+export const prerender = true
+
 import Button from '../components/ui/Button.astro'
 import Container from '../components/ui/Container.astro'
 import Icon from '../components/ui/Icon.astro'

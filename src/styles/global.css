@@ -5,7 +5,7 @@
 @import "@fontsource-variable/public-sans";
 
 /*
- * Tokens da marca CasaImobi, medidos em public/logo-casaimobi.png.
+ * Tokens da marca CasaImobi, medidos em marca/logo-casaimobi.png.
  * No Tailwind v4 as variáveis dentro de @theme viram utilitários sozinhas:
  * --color-brand-900 gera bg-brand-900, text-brand-900, border-brand-900...
  *
